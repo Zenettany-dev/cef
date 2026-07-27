@@ -1,0 +1,1142 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SAMP Dialog System</title>
+<style>
+  @font-face {
+    font-family: 'Proxima Nova Bold';
+    src: url('css/fonts/ProximaNova-Bold.ttf') format('truetype');
+    font-weight: bold;
+	  font-style: normal;
+  }
+
+  @font-face {
+    font-family: "Gotham-Medium";
+    src: url("css/fonts/Gotham Pro Medium.ttf");
+  }
+
+  /* Controls for Demo */
+  .controls {
+    background-color: #333;
+    padding: 15px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+  }
+
+  .controls h2 {
+    margin-bottom: 15px;
+    color: #fff;
+  }
+
+  .control-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 15px;
+  }
+
+  .controls button {
+    background-color: #4caf50;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+
+  .controls button:hover {
+    background-color: #45a049;
+  }
+
+  #response-display {
+    background-color: #444;
+    padding: 10px;
+    border-radius: 4px;
+    margin-top: 10px;
+  }
+
+  #response-display p {
+    margin: 5px 0;
+  }
+
+  .dialog:focus {
+      outline: none;
+  }
+
+  .dialog {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: linear-gradient(to bottom right, #1a1a1c, #201f24);
+    border: 1px solid #444;
+    border-radius: 5px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    min-width: 450px;
+    max-width: 800px;
+    /* min-height: 300px;  — убираем фиксированную минимальную высоту */
+    z-index: 1000;
+    color: #fff;
+    user-select: none;
+    overflow: hidden;
+
+    white-space: normal;
+    word-wrap: break-word;
+    word-break: break-word;
+  }
+
+  .dialog::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+
+      background: 
+          linear-gradient(to bottom, rgba(26, 26, 28, 0.6) 0%, rgba(32,31,36,0.1) 100%),
+          url('images/background.svg');
+
+      z-index: -1;
+  }
+
+  .dialog-header {
+    padding: 10px 20px;
+    cursor: move;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+  }
+
+  .dialog-header::after {
+    content: "";
+    flex-grow: 1;
+    height: 1px;
+    background: linear-gradient(to right, rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0));
+    align-self: center;
+    display: block;
+    margin-top: 10px;
+    margin-left: 5px;
+  }
+
+  .dialog-title {
+    font-weight: bold;
+    font-size: 20px;
+    color: #e69348;
+    text-transform: uppercase;
+    font-family: "Gotham-Medium", sans-serif;
+    margin-top: 10px;
+    letter-spacing: 0.155vh;
+  }
+
+  .dialog-content {
+    padding: 20px;
+    max-height: 400px;
+    overflow-y: auto;
+    scrollbar-width: 0;
+    margin-top: -15px;
+  }
+    /* dialog-content без tablist */
+  .dialog-content:not(:has(.dialog-tablist)) {
+    padding: 20px;
+    max-height: 400px;
+    overflow-y: auto;
+    scrollbar-width: 0;
+    margin-top: -15px;
+  }
+
+  /* dialog-content с tablist */
+  .dialog-content:has(.dialog-tablist) {
+    padding-bottom: 0;
+    max-height: 400px;
+    overflow-y: auto;
+    scrollbar-width: 0;
+    margin-top: -15px;
+  }
+
+  .dialog-text {
+    margin-bottom: -15px;
+    line-height: 1.5;
+    font-family: 'Proxima Nova Bold';
+    font-size: small;
+    white-space: pre-wrap; /* сохраняет пробелы и переносы */
+  } 
+  
+  .dialog-list-text {
+    margin-bottom: 5px;
+    line-height: 1.5;
+    font-family: 'Proxima Nova Bold';
+    font-size: small;
+    white-space: pre-wrap; /* сохраняет пробелы и переносы */
+  } 
+
+  .dialog-buttons {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 20px;
+    border-bottom-left-radius: 5px;
+    border-bottom-right-radius: 5px;
+  }
+
+  .dialog-button {
+    padding: 12px 15px;
+    border: none;
+    border-radius: 1.5px;
+    cursor: pointer;
+    font-size: 12px;
+    min-width: 80px;
+    text-transform: uppercase;
+    font-family: 'Proxima Nova Bold';
+    transition: background-color 0.2s;
+    margin-bottom: 10px;
+  }
+
+  .dialog-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background-color: #3f3f41;
+  }
+
+  .dialog-button-primary {
+    background-image:linear-gradient(to right, #21a24d, #5fda55);
+    color: white;
+    flex: 1;
+    margin-right: 5px;
+    box-shadow: 0 1.5px 0 #2d682f; /* начальная тень */
+    transition: box-shadow 0.5s ease; /* плавная анимация */
+  }
+
+  .dialog-button-primary:hover:not(:disabled) {
+    box-shadow: 
+      0 1.5px 0 #2d682f,
+      0 3px 2px rgba(70, 180, 76, 0.3);
+  }
+
+  .dialog-button-secondary {
+    background-color: #3f3f41;
+    opacity: 0.7;
+    color: white;
+    flex: 1;
+    margin-left: 5px;
+    outline: 0.1px solid rgba(255, 255, 255, 0.3);
+    outline-offset: 0;
+    transition: outline 0.25s ease;
+  }
+
+  .dialog-button-secondary:hover {
+    outline: 0.3px solid rgba(255, 255, 255, 0.4);  
+  }
+
+  .dialog-button-middle {
+    background-color: #2196f3;
+    box-shadow: 0 1.5px 0 #092842;
+    color: white;
+    transition: box-shadow 0.5s ease;
+    flex: 1;
+    margin-left: 2px;
+    margin-right: 2px;
+  }
+
+  .dialog-button-middle:hover {
+    box-shadow: 
+      0 1.5px 0 #092842,
+      0 3px 2px rgba(16, 79, 131, 0.3);
+  }
+
+  /* Timer Dialog Styles */
+  .timer-dialog .dialog-button-primary {
+    background-color: #3f3f41;
+    position: relative;
+    box-shadow: none;
+  }
+
+  .timer-dialog .dialog-button-primary.timer-active {
+    background-color: #4caf50;
+  }
+
+  .timer-text {
+    font-size: 14px;
+    font-weight: bold;
+  }
+
+  /* Input Dialog Styles */
+  .dialog-input {
+    width: 100%;
+    height: 40px; /* фиксированная высота */
+    padding: 0 10px; /* без вертикальных отступов */
+    margin-top: 20px;
+    margin-bottom: -15px;
+    background-color: #000;
+    border: 1px solid #000;
+    color: gray;
+    border-radius: 1px;
+    font-family: 'Gotham-Medium';
+    line-height: 40px; /* равен высоте, чтобы текст был по центру */
+  }
+
+  .dialog-input:focus {
+    outline: none;
+  }
+
+  .dialog-password {
+    -webkit-text-security: disc;
+  }
+
+  /* List Dialog Styles */
+  .dialog-list-header {
+    padding: 8px 10px;
+    background-color: #222;
+    border: 1px solid #555;
+    border-bottom: none;
+    border-top-left-radius: 3px;
+    border-top-right-radius: 3px;
+    font-weight: bold;
+  }
+
+  .dialog-list {
+    border-radius: 3px;
+    max-height: 250px;
+    margin-bottom: -20px;
+  }
+
+  .dialog-list-item {
+    padding: 10px 12px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    border-bottom: none; /* убираем линию */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    font-family: 'Proxima Nova Bold';
+    font-size: 14px;
+
+    background-color: rgba(0, 0, 0, 0.5);
+    border-radius: 2px;
+    margin-bottom: 4px;
+  }
+
+
+  .dialog-list-item:last-child { border-bottom: none;}
+
+  .dialog-list-item:hover {
+    background-color: #444;
+  }
+
+  .dialog-list-item.selected {
+    background-color: #e69348;
+    color: #2e302b;
+    box-shadow: 0 0 5px rgba(230, 147, 72, 0.5);
+  }
+
+  .dialog-tablist {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;                /* расстояние между элементами */
+    max-height: 300px;
+    overflow-y: overlay;
+  }
+
+  /* общий контейнер строки */
+  .dialog-tablist .row {
+    display: flex;
+    border-radius: 2px;
+    padding: 6px 8px;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.1s;
+    background-color: rgba(0, 0, 0, 0.5);
+  }
+
+  /* заголовки */
+  .dialog-tablist .row.header {
+    font-weight: bold;
+    color: #e69348;
+    background: transparent;   /* без фона */
+    box-shadow: none;          /* без тени */
+    cursor: default;
+    margin-top: -10px;
+    margin-bottom: -10px;
+    margin-left: -10px;
+  }
+
+  /* ячейки */
+  .dialog-tablist .cell {
+    flex: 1;
+    padding: 4px 6px;
+    font-family: 'Proxima Nova Bold';
+    font-size: 14px;
+  }
+
+  /* выделенный элемент */
+  .dialog-tablist .row.selected {
+    background-color: #e69348;
+    color: #2e302b;
+    box-shadow: 0 0 5px rgba(230, 147, 72, 0.5);
+  }
+
+    /* скролл */
+  .dialog-tablist::-webkit-scrollbar {
+    width: 6px; /* делаем чуть шире */
+  }
+
+  .dialog-tablist::-webkit-scrollbar-thumb {
+    background-color: #e69348;
+    border-radius: 3px;
+    border: 2px solid #1a1a1c;
+  }
+
+
+  /* Picture Dialog Styles */
+  .dialog-pictures {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 15px;
+    border-top: 1px solid #444;
+    padding-top: 15px;
+    margin-top: 25px; 
+  }
+
+  .dialog-pictures img {
+    max-width: 100px;
+    max-height: 100px;
+    border-radius: 3px;
+    border: 1px solid #555;
+  }
+</style>
+</head>
+<body>
+<!-- <div class="controls">
+  <h2>Dialog Demo Controls</h2>
+  <div class="control-group">
+    <button onclick="showDialog(1, 0, 'MSGBOX Example', 'This is a simple message box.\nIt supports multiple lines.\n\tAnd tabbed text.', 'Далее', 'Cancel')">Show MSGBOX</button>
+    <button onclick="showDialog(2, 1, 'INPUT Example', 'Please enter your name:', 'Submit', 'Cancel')">Show INPUT</button>
+    <button onclick="showDialog(3, 2, 'LIST Example', 'Option 1\nOption 2\nOption 3', 'Select', 'Cancel')">Show LIST</button>
+    <button onclick="showDialog(4, 3, 'PASSWORD Example', 'Enter your password:', 'Login', 'Cancel')">Show PASSWORD</button>
+    <button onclick="showDialog(5, 4, 'TABLIST Example', '1\tPlayer1\t100\n2\tPlayer2\t85\n3\tPlayer3\t120', 'Select', 'Cancel')">Show TABLIST</button>
+    <button onclick="showDialog(6, 5, 'TABLIST HEADERS Example', 'ID\tName\tScore\n1\tPlayer1\t100\n2\tPlayer2\t85\n3\tPlayer3\t120', 'Select', 'Cancel')">Show TABLIST HEADERS</button>
+    <button onclick="showDialog(7, 7, 'MSGBOX PICTURE Example', 'This dialog includes images.\nYou can add multiple images to your dialogs.', 'OK', 'Cancel')">Show MSGBOX PICTURE</button>
+    <button onclick="showDialog(8, 8, 'LIST TEXT Example', 'Please read the instructions below:\n\nOption 1\nOption 2\nOption 3\nOption 4\nOption 5', 'Select', 'Cancel')">Show LIST TEXT</button>
+  </div>
+  <div class="control-group">
+    <button onclick="showDialogWithMiddleButton(2)">Show with Middle Button</button>
+    <button onclick="showTimerDialog(10)">Show Timer Dialog (10s)</button>
+    <button onclick="showTimerDialog(5)">Show Timer Dialog (5s)</button>
+    <button onclick="showTimerDialog(3)">Show Timer Dialog (3s)</button>
+    <button onclick="showDialog(9, 0, 'Color Test', 'This text has {FF0000}red{FFFFFF}, {00FF00}green{FFFFFF}, {0000FF}blue{FFFFFF} colors!\nAnd {FFFF00}yellow{FFFFFF}, {FF00FF}magenta{FFFFFF}, {00FFFF}cyan{FFFFFF} too!\nCustom colors: {FF5500}orange{FFFFFF}, {8A2BE2}purple{FFFFFF}, {32CD32}lime{FFFFFF}!', 'OK', 'Cancel')">Show Color Test</button>
+    <div id="response-display">
+      <p><strong>Response:</strong> <span id="response-value">None</span></p>
+      <p><strong>List Item:</strong> <span id="listitem-value">-1</span></p>
+      <p><strong>Input Text:</strong> <span id="inputtext-value"></span></p>
+      <p><strong>Dialog ID:</strong> <span id="dialogid-value">-1</span></p>
+    </div>
+  </div>
+</div> -->
+
+<!-- Dialog Container -->
+<div id="dialog-container"></div>
+
+<script>
+  // Dialog System for SAMP
+  let currentDialog = null
+  let isDragging = false
+  let dragOffsetX = 0
+  let dragOffsetY = 0
+  let selectedListItem = -1
+  let inputText = ""
+  let currentDialogStyle = -1
+  let timerInterval = null
+  let dialogID = -1
+
+  // Dialog style constants
+  const DIALOG_STYLE_MSGBOX = 0
+  const DIALOG_STYLE_INPUT = 1
+  const DIALOG_STYLE_LIST = 2
+  const DIALOG_STYLE_PASSWORD = 3
+  const DIALOG_STYLE_TABLIST = 4
+  const DIALOG_STYLE_TABLIST_HEADERS = 5
+  const DIALOG_STYLE_MSGBOX_PICTURE = 7
+  const DIALOG_STYLE_LIST_TEXT = 8
+  const DIALOG_STYLE_TIMER = 9
+
+  showDialog(9, DIALOG_STYLE_TABLIST_HEADERS, 'Проверка связи', 'Он привет?\tПроверим\n1. Привет\tНе привет\n2. Привет\tНе привет\n3. Привет\tНе привет\n4. Привет\tНе привет\n5. Привет\tНе привет\n6. Привет\tНе привет\n7. Привет\tНе привет\n8. Привет\tНе привет\n9. Привет\tНе привет\n10. Привет\tНе привет\n11. Привет\tНе привет\n12. Привет\tНе привет', 'Выбрать', 'Назад')
+
+  // Show timer dialog function
+  function showTimerDialog(seconds) {
+    showDialog(11, DIALOG_STYLE_TIMER, 'Timer Dialog', `This dialog will auto-enable the button after ${seconds} seconds.\nPlease wait for the timer to finish.`, 'Continue', 'Cancel', false, seconds)
+  }
+
+  // Show dialog function
+  function showDialog(dialogid, style, title, text, button1, button2, middleButtonText = "", timerSeconds = 0) {
+    // Close any existing dialog
+    if (currentDialog) {
+      try {
+        document.getElementById("dialog-container").removeChild(currentDialog)
+      } catch (e) {
+        console.log("Dialog was already removed")
+      }
+    }
+
+    // Clear any existing timer
+    if (timerInterval) {
+      clearInterval(timerInterval)
+      timerInterval = null
+    }
+
+    // Reset dialog state
+    selectedListItem = -1
+    inputText = ""
+    currentDialogStyle = style
+    dialogID = dialogid
+
+    // Create dialog element
+    const dialog = document.createElement("div")
+    dialog.className = "dialog"
+    dialog.style.transform = "translate(-50%, -50%) scale(1.5)"
+    dialog.style.transformOrigin = "center"
+    
+    if (style === DIALOG_STYLE_TIMER) {
+      dialog.classList.add("timer-dialog")
+    }
+    dialog.setAttribute("tabindex", "0") // Make dialog focusable for keyboard events
+
+    // Create dialog header
+    const header = document.createElement("div")
+    header.className = "dialog-header"
+
+    const titleElement = document.createElement("div")
+    titleElement.className = "dialog-title"
+    titleElement.textContent = title
+
+    header.appendChild(titleElement)
+
+    let dialogScale = 1.5
+
+    header.onmousedown = (e) => {
+      isDragging = true
+      const rect = dialog.getBoundingClientRect()
+      dragOffsetX = e.clientX - rect.left
+      dragOffsetY = e.clientY - rect.top
+    }
+
+    document.onmousemove = (e) => {
+      if (isDragging) {
+        dialog.style.left = e.clientX - dragOffsetX + "px"
+        dialog.style.top = e.clientY - dragOffsetY + "px"
+        dialog.style.transform = `scale(${dialogScale})`
+        dialog.style.transformOrigin = "top left"
+      }
+    }
+
+    document.onmouseup = () => {
+      isDragging = false
+    }
+
+
+    // Add header to dialog
+    dialog.appendChild(header)
+
+    // Create dialog content
+    const content = document.createElement("div")
+    content.className = "dialog-content"
+    dialog.appendChild(content)
+
+    // Process text for color embedding
+    const processedText = processColorEmbedding(text)
+
+    // Create dialog based on style
+    switch (style) {
+      case DIALOG_STYLE_MSGBOX:
+      case DIALOG_STYLE_TIMER:
+        createMsgBoxDialog(content, processedText)
+        break
+      case DIALOG_STYLE_INPUT:
+        createInputDialog(content, processedText)
+        break
+      case DIALOG_STYLE_LIST:
+        createListDialog(content, processedText)
+        break
+      case DIALOG_STYLE_PASSWORD:
+        createPasswordDialog(content, processedText)
+        break
+      case DIALOG_STYLE_TABLIST:
+        createTablistDialog(content, processedText, false)
+        break
+      case DIALOG_STYLE_TABLIST_HEADERS:
+        createTablistDialog(content, processedText, true)
+        break
+      case DIALOG_STYLE_MSGBOX_PICTURE:
+        createMsgBoxPictureDialog(content, processedText)
+        break
+      case DIALOG_STYLE_LIST_TEXT:
+        createListTextDialog(content, processedText)
+        break
+    }
+
+    // Create dialog buttons
+    const buttons = document.createElement("div")
+    buttons.className = "dialog-buttons"
+
+    const button1Element = document.createElement("button")
+    button1Element.className = "dialog-button dialog-button-primary"
+    
+    // Handle timer functionality
+    if (style === DIALOG_STYLE_TIMER && timerSeconds > 0) {
+      button1Element.disabled = true
+      let remainingTime = timerSeconds
+      
+      const updateButtonText = () => {
+        if (remainingTime > 0) {
+          // Show only timer during countdown
+          button1Element.innerHTML = `<span class="timer-text">(${remainingTime.toFixed(1)}s)</span>`
+        } else {
+          // Show button text after timer expires
+          button1Element.innerHTML = button1
+          button1Element.disabled = false
+          button1Element.classList.add("timer-active")
+          if (timerInterval) {
+            clearInterval(timerInterval)
+            timerInterval = null
+          }
+        }
+      }
+      
+      updateButtonText()
+      
+      timerInterval = setInterval(() => {
+        remainingTime -= 0.1
+        if (remainingTime <= 0) {
+          remainingTime = 0
+        }
+        updateButtonText()
+      }, 100)
+    } else {
+      button1Element.textContent = button1
+    }
+    
+    button1Element.onclick = () => {
+      if (!button1Element.disabled) {
+        closeDialog(1)
+      }
+    }
+
+    const button2Element = document.createElement("button")
+    button2Element.className = "dialog-button dialog-button-secondary"
+    button2Element.textContent = button2
+    button2Element.onclick = () => closeDialog(0)
+
+    if (middleButtonText.length > 0) {
+      const middleButton = document.createElement("button")
+      middleButton.className = "dialog-button dialog-button-middle"
+      middleButton.textContent = middleButtonText
+      middleButton.onclick = () => closeDialog(2)
+      
+      // Add buttons in the correct order with primary first, middle in center, secondary last
+      buttons.appendChild(button1Element)
+      buttons.appendChild(middleButton)
+      buttons.appendChild(button2Element)
+    } else {
+      // Add primary button first, secondary button last
+      buttons.appendChild(button1Element)
+      buttons.appendChild(button2Element)
+    }
+
+    // Add buttons to dialog
+    dialog.appendChild(buttons)
+
+    // Add dialog to container
+    document.getElementById("dialog-container").appendChild(dialog)
+    currentDialog = dialog
+
+    // Focus input if present
+    const input = dialog.querySelector(".dialog-input")
+    if (input) {
+      input.focus()
+    } else {
+      dialog.focus() // Focus the dialog for keyboard events
+    }
+
+    // Add keyboard event listener
+    dialog.addEventListener("keydown", handleKeyboardNavigation)
+  }
+
+  // Handle keyboard navigation
+  function handleKeyboardNavigation(e) {
+    if (!currentDialog) return
+
+    switch (e.key) {
+      case "ArrowUp":
+        e.preventDefault()
+        navigateUp()
+        break
+      case "ArrowDown":
+        e.preventDefault()
+        navigateDown()
+        break
+      case "Enter":
+        e.preventDefault()
+        // Trigger the primary/accept button
+        const primaryButton = currentDialog.querySelector(".dialog-button-primary")
+        if (primaryButton && !primaryButton.disabled) {
+          primaryButton.click()
+        }
+        break
+      case "Escape":
+        e.preventDefault()
+        // Trigger the secondary/cancel button
+        const secondaryButton = currentDialog.querySelector(".dialog-button-secondary")
+        if (secondaryButton) {
+          secondaryButton.click()
+        }
+        break
+    }
+  }
+
+  // Navigate up in list
+  function navigateUp() {
+    switch (currentDialogStyle) {
+      case DIALOG_STYLE_LIST:
+      case DIALOG_STYLE_LIST_TEXT:
+        navigateListUp(".dialog-list-item")
+        break
+      case DIALOG_STYLE_TABLIST:
+      case DIALOG_STYLE_TABLIST_HEADERS:
+        navigateListUp(".dialog-tablist tr")
+        break
+    }
+  }
+
+  // Navigate down in list
+  function navigateDown() {
+    switch (currentDialogStyle) {
+      case DIALOG_STYLE_LIST:
+      case DIALOG_STYLE_LIST_TEXT:
+        navigateListDown(".dialog-list-item")
+        break
+      case DIALOG_STYLE_TABLIST:
+      case DIALOG_STYLE_TABLIST_HEADERS:
+        navigateListDown(".dialog-tablist tr")
+        break
+    }
+  }
+
+  // Navigate up in a list
+  function navigateListUp(selector) {
+    if (!currentDialog) return
+
+    const items = currentDialog.querySelectorAll(selector)
+    if (items.length === 0) return
+
+    // Find the currently selected item
+    let selectedIndex = -1
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].classList.contains("selected")) {
+        selectedIndex = i
+        break
+      }
+    }
+
+    // Move selection up
+    if (selectedIndex > 0) {
+      // Remove selected class from current item
+      if (selectedIndex !== -1) {
+        items[selectedIndex].classList.remove("selected")
+      }
+
+      // Select the previous item
+      selectedIndex--
+      items[selectedIndex].classList.add("selected")
+      
+      // Update selected item
+      selectedListItem = selectedIndex
+      
+      // Update input text based on the selected item
+      if (selector === ".dialog-list-item") {
+        inputText = items[selectedIndex].textContent
+      } else if (selector === ".dialog-tablist tr") {
+        inputText = items[selectedIndex].cells[0].textContent
+      }
+
+      // Scroll to the selected item if needed
+      items[selectedIndex].scrollIntoView({ block: "nearest" })
+    }
+  }
+
+  // Navigate down in a list
+  function navigateListDown(selector) {
+    if (!currentDialog) return
+
+    const items = currentDialog.querySelectorAll(selector)
+    if (items.length === 0) return
+
+    // Find the currently selected item
+    let selectedIndex = -1
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].classList.contains("selected")) {
+        selectedIndex = i
+        break
+      }
+    }
+
+    // Move selection down
+    if (selectedIndex < items.length - 1) {
+      // Remove selected class from current item
+      if (selectedIndex !== -1) {
+        items[selectedIndex].classList.remove("selected")
+      } else {
+        // If nothing is selected, start from the beginning
+        selectedIndex = -1
+      }
+
+      // Select the next item
+      selectedIndex++
+      items[selectedIndex].classList.add("selected")
+      
+      // Update selected item
+      selectedListItem = selectedIndex
+      
+      // Update input text based on the selected item
+      if (selector === ".dialog-list-item") {
+        inputText = items[selectedIndex].textContent
+      } else if (selector === ".dialog-tablist tr") {
+        inputText = items[selectedIndex].cells[0].textContent
+      }
+
+      // Scroll to the selected item if needed
+      items[selectedIndex].scrollIntoView({ block: "nearest" })
+    }
+  }
+
+  // Show dialog with middle button
+  function showDialogWithMiddleButton(style) {
+    const titles = [
+      "MSGBOX with Middle Button",
+      "INPUT with Middle Button",
+      "LIST with Middle Button",
+      "PASSWORD with Middle Button",
+      "TABLIST with Middle Button",
+      "TABLIST HEADERS with Middle Button",
+      "MSGBOX PICTURE with Middle Button",
+      "LIST TEXT with Middle Button",
+    ]
+
+    const texts = [
+      "This dialog has three buttons.\nChoose one of the options.",
+      "Enter your information:",
+      "Option 1\nOption 2\nOption 3",
+      "Enter your secure code:",
+      "ID\tName\tScore\n1\tPlayer1\t100\n2\tPlayer2\t85\n3\tPlayer3\t120",
+      "ID\tName\tScore\n1\tPlayer1\t100\n2\tPlayer2\t85\n3\tPlayer3\t120",
+      "This dialog has an image and three buttons.\nMake your choice.",
+      "Read this text carefully:\n\nOption 1\nOption 2\nOption 3",
+    ]
+
+    showDialog(10, style, titles[style], texts[style], "Accept", "Decline", "I dont know")
+  }
+
+  // Create message box dialog
+  function createMsgBoxDialog(container, text) {
+    const textElement = document.createElement("div")
+    textElement.className = "dialog-text"
+    textElement.innerHTML = text
+    container.appendChild(textElement)
+  }
+
+    // Create input dialog
+  function createInputDialog(container, text) {
+    const textElement = document.createElement("div");
+    textElement.className = "dialog-text";
+    textElement.innerHTML = text;
+
+    const input = document.createElement("input");
+    input.className = "dialog-input";
+    input.placeholder = "Нажмите для ввода";
+    input.type = "text";
+
+    container.appendChild(textElement);
+    container.appendChild(input);
+
+    input.focus();
+  }
+
+
+  // Create list dialog (modified - no header)
+  function createListDialog(container, text) {
+    const lines = text.split("\n")
+    
+    // Create the list directly with all lines (no header processing)
+    if (lines.length > 0) {
+      const list = document.createElement("div")
+      list.className = "dialog-list"
+
+      for (let i = 0; i < lines.length; i++) {
+        const item = document.createElement("div")
+        item.className = "dialog-list-item"
+        item.innerHTML = lines[i]
+        item.dataset.index = i
+
+        // Select first item by default
+        if (i === 0) {
+          item.classList.add("selected")
+          selectedListItem = 0
+          inputText = item.textContent
+        }
+
+        item.onclick = (e) => {
+          // Remove selected class from all items
+          const items = list.querySelectorAll(".dialog-list-item")
+          items.forEach((item) => item.classList.remove("selected"))
+
+          // Add selected class to clicked item
+          e.target.classList.add("selected")
+
+          // Update selected item
+          selectedListItem = Number.parseInt(e.target.dataset.index)
+          inputText = e.target.textContent
+        }
+
+        list.appendChild(item)
+      }
+
+      container.appendChild(list)
+    }
+  }
+
+  // Create password dialog
+  function createPasswordDialog(container, text) {
+    const textElement = document.createElement("div")
+    textElement.className = "dialog-text"
+    textElement.innerHTML = text
+
+    const input = document.createElement("input")
+    input.className = "dialog-input dialog-password"
+    input.type = "password"
+    input.placeholder = "Нажмите для ввода"
+    input.oninput = (e) => {
+      inputText = e.target.value
+    }
+
+    container.appendChild(textElement)
+    container.appendChild(input)
+  }
+
+  // Create tablist dialog
+  function createTablistDialog(container, text, hasHeaders) {
+  const lines = text.split("\n")
+
+  // основной контейнер списка
+  const wrapper = document.createElement("div")
+  wrapper.className = "dialog-tablist"
+
+  // создаём заголовки, если нужны
+  if (hasHeaders && lines.length > 1) {
+    const headerRow = document.createElement("div")
+    headerRow.className = "row header"
+
+    const headers = lines[0].split("\t")
+    for (const header of headers) {
+      const cell = document.createElement("div")
+      cell.className = "cell"
+      cell.innerHTML = header
+      headerRow.appendChild(cell)
+    }
+    wrapper.appendChild(headerRow)
+
+    lines.shift() // убираем строку с заголовками
+  }
+
+  // создаём строки
+  for (let i = 0; i < lines.length; i++) {
+    const row = document.createElement("div")
+    row.className = "row"
+    row.dataset.index = i
+
+    const columns = lines[i].split("\t")
+    for (const column of columns) {
+      const cell = document.createElement("div")
+      cell.className = "cell"
+      cell.innerHTML = column
+      row.appendChild(cell)
+    }
+
+    // выделяем первую строку по умолчанию
+    if (i === 0) {
+      row.classList.add("selected")
+      selectedListItem = 0
+      inputText = row.firstChild.textContent
+    }
+
+    row.onclick = (e) => {
+      // снимаем выделение со всех
+      const rows = wrapper.querySelectorAll(".row")
+      rows.forEach((r) => r.classList.remove("selected"))
+
+      // выделяем текущую
+      row.classList.add("selected")
+
+      selectedListItem = Number.parseInt(row.dataset.index)
+      inputText = row.firstChild.textContent
+    }
+
+    wrapper.appendChild(row)
+  }
+
+  container.appendChild(wrapper)
+}
+
+
+  // Create message box with picture dialog
+  function createMsgBoxPictureDialog(container, text) {
+    const textElement = document.createElement("div")
+    textElement.className = "dialog-text"
+    textElement.innerHTML = text
+    container.appendChild(textElement)
+
+    // Create container for multiple images at the bottom
+    const picturesContainer = document.createElement("div")
+    picturesContainer.className = "dialog-pictures"
+
+    // Add multiple images (for demo purposes)
+    const imageUrls = [
+      "https://via.placeholder.com/100/333333/FFFFFF?text=Image+1",
+      "https://via.placeholder.com/100/444444/FFFFFF?text=Image+2",
+      "https://via.placeholder.com/100/555555/FFFFFF?text=Image+3"
+    ]
+
+    for (const url of imageUrls) {
+      const image = document.createElement("img")
+      image.src = url
+      image.alt = "Dialog Image"
+      picturesContainer.appendChild(image)
+    }
+
+    container.appendChild(picturesContainer)
+  }
+
+  // Create list text dialog (modified - no header in the list part)
+  function createListTextDialog(container, text) {
+    // Split the text by double newline to separate instruction text from list
+    const parts = text.split(/\n\n/)
+    
+    if (parts.length >= 2) {
+      // First part is the instruction text
+      const instructionText = parts[0]
+      const textElement = document.createElement("div")
+      textElement.className = "dialog-list-text"
+      textElement.innerHTML = instructionText
+      container.appendChild(textElement)
+      
+      // Second part contains just the list items (no header)
+      const listText = parts[1]
+      const listLines = listText.split("\n")
+      
+      // Create the list directly with all lines (no header processing)
+      if (listLines.length > 0) {
+        const list = document.createElement("div")
+        list.className = "dialog-list"
+
+        for (let i = 0; i < listLines.length; i++) {
+          const item = document.createElement("div")
+          item.className = "dialog-list-item"
+          item.innerHTML = listLines[i]
+          item.dataset.index = i
+
+          // Select first item by default
+          if (i === 0) {
+            item.classList.add("selected")
+            selectedListItem = 0
+            inputText = item.textContent
+          }
+
+          item.onclick = (e) => {
+            // Remove selected class from all items
+            const items = list.querySelectorAll(".dialog-list-item")
+            items.forEach((item) => item.classList.remove("selected"))
+
+            // Add selected class to clicked item
+            e.target.classList.add("selected")
+
+            // Update selected item
+            selectedListItem = Number.parseInt(e.target.dataset.index)
+            inputText = e.target.textContent
+          }
+
+          list.appendChild(item)
+        }
+
+        container.appendChild(list)
+      }
+    } else {
+      // If there's no double newline, just show the text
+      const textElement = document.createElement("div")
+      textElement.className = "dialog-text"
+      textElement.innerHTML = text
+      container.appendChild(textElement)
+    }
+  }
+
+  // Process color embedding in text
+  function processColorEmbedding(text) {
+    let processedText = text;
+
+    // Обработка {RRGGBB}
+    processedText = processedText.replace(/\{([0-9A-Fa-f]{6})\}/g, (match, color) => {
+        return `<span style="color: #${color}; font-family: 'Proxima Nova Bold', 'Gotham-Medium', sans-serif; font-size: inherit; font-weight: inherit;">`;
+    });
+
+    // Подсчет открытых спанов
+    let openSpans = 0;
+    processedText = processedText.replace(/<span style="color: #[0-9A-Fa-f]{6}.*?">/g, (match) => {
+        openSpans++;
+        return match;
+    });
+
+    // Закрытие всех спанов
+    for (let i = 0; i < openSpans; i++) {
+        processedText += '</span>';
+    }
+
+    // Перевод \n и \t
+    processedText = processedText.replace(/\\n/g, "<br>");
+    processedText = processedText.replace(/\\t/g, "&nbsp;&nbsp;&nbsp;&nbsp;");
+
+    return processedText;
+}
+
+
+  // Close dialog and handle response
+  function closeDialog(response) {
+    if (currentDialog) {
+      // Clear timer if exists
+      if (timerInterval) {
+        clearInterval(timerInterval)
+        timerInterval = null
+      }
+
+      try {
+        document.getElementById("dialog-container").removeChild(currentDialog)
+      } catch (e) {
+        console.log("Dialog was already removed")
+      }
+      currentDialog = null
+
+      // Update response display for demo
+      document.getElementById("response-value").textContent = response
+      document.getElementById("listitem-value").textContent = selectedListItem
+      document.getElementById("inputtext-value").textContent = inputText
+      document.getElementById("dialogid-value").textContent = dialogID
+
+      // In a real SAMP implementation, you would send this data back to the game
+      console.log("Dialog Response:", {
+        response: response,
+        listitem: selectedListItem,
+        inputtext: inputText,
+      })
+    }
+  }
+</script>
+</body>
+</html>

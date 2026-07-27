@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interface BizInfo</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;500;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: #0a0a0a;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            text-align: center;
+            height: 100vh;
+            padding-bottom: 5rem;
+            overflow-y: hidden;
+            overflow-x: hidden;
+        }
+
+        .header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .header h2 {
+            font-size: 0.9rem;
+            font-weight: 300;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            opacity: 0.7;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            padding: 0 60px;
+            text-shadow: 0 0 12px rgba(255, 255, 255, 0.3);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .header h1::before,
+        .header h1::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            width: 100vw;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .header h1::before { left: -100vw; }
+        .header h1::after { right: -100vw; }
+
+        .status {
+            padding-bottom: 1rem;
+            animation: fadeIn 1s ease-out forwards 0.3s;
+        }
+
+        .status-text {
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            font-size: 1rem;
+            font-weight: 600;
+            padding: 7px 14px;
+            border-radius: 2px;
+        }
+
+        .green { color: #7cff00; text-shadow: 0 0 10px #7cff00; }
+        .red { color: #ff3b3b; text-shadow: 0 0 10px #ff3b3b; }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            width: 90%;
+            max-width: 850px;
+            margin-bottom: 1.5rem;
+            border-radius: 8px;
+            padding: 1rem;
+            backdrop-filter: blur(6px);
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            text-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: #9ca3af;
+            text-transform: uppercase;
+            margin-top: 0.2rem;
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2 id="station-type">АВТОМОБИЛЬНАЯ ЗАПРАВОЧНАЯ СТАНЦИЯ</h2>
+        <h1 id="station-name">Малая Эдовка</h1>
+    </div>
+
+    <div class="status">
+        <span id="status-text" class="status-text green">ОТКРЫТО</span>
+    </div>
+
+    <div class="stats">
+        <div class="stat">
+            <span id="station-number" class="stat-value">51</span>
+            <span class="stat-label">Номер</span>
+        </div>
+        <div class="stat">
+            <span id="station-owner" class="stat-value"><strong>Государство</strong></span>
+            <span class="stat-label">Владелец</span>
+        </div>
+        <div class="stat">
+            <span id="station-price" class="stat-value">9 000 000 <span class="green">₽</span></span>
+            <span class="stat-label">Цена</span>
+        </div>
+        <div class="stat">
+            <span id="station-roof" class="stat-value"><strong>Отсутствует</strong></span>
+            <span class="stat-label">Крыша</span>
+        </div>
+    </div>
+
+<script>
+
+const updateElement = (id, text, color = null) => {
+    const el = document.getElementById(id);
+    if (el) {
+        el.innerHTML = text;
+        if (color) el.className = `biz-status-text ${color}`;
+    }
+};
+
+function ShowBizInfo(station_type, status_text, station_name, station_number, station_owner, station_price, station_roof) {
+    const bizInfoContainer = document.getElementById('bizInfoContainer');
+    bizInfoContainer.style.display = "flex";
+    
+    updateElement("station-type", station_type);
+    status_text ? updateElement("status-text", "ОТКРЫТО", "green") : updateElement("status-text", "ЗАКРЫТО", "red");
+    updateElement("station-name", station_name);
+    updateElement("station-number", station_number);
+    updateElement("station-owner", "<strong>"+ station_owner + "</strong>");
+    updateElement("station-price", station_price + " <span class='green'>₽</span>");
+    station_roof ? updateElement("station-roof", "<strong>Есть</strong>") : updateElement("station-roof", "<strong>Отсутствует</strong>");
+    setTimeout(() => {
+      const bizInfoContainer = document.getElementById('bizInfoContainer');
+        bizInfoContainer.style.display = "none";
+    }, 5000);
+}
+
+cef.on("game:ShowBizInfo", (station_type, status_text, station_name, station_number, station_owner, station_price, station_roof) => {
+    ShowBizInfo(station_type, status_text, station_name, station_number, station_owner, station_price, station_roof);
+});
+
+cef.on("game:HideBizInfo", () => {
+    const bizInfoContainer = document.getElementById('bizInfoContainer');
+    bizInfoContainer.style.display = "none";
+});
+
+</script>
+</body>
+</html>

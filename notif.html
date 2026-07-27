@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Уведомление</title>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #121212;
+      padding: 20px;
+    }
+    .notification {
+      position: relative;
+      display: flex;
+      gap: 12px;
+      padding: 16px 20px;
+      border-radius: 4  px;
+      color: #fff;
+      width: 320px;
+      overflow: hidden;
+      background: #4caf50;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      margin-bottom: 20px;
+    }
+    .notification .icon {
+      font-size: 28px;
+      flex-shrink: 0;
+    }
+    .notification .content {
+      flex-grow: 1;
+    }
+    .notification .title {
+      font-weight: bold;
+      font-size: 16px;
+    }
+    .notification .message {
+      font-size: 14px;
+      margin-top: 4px;
+    }
+    .notification .progress-bar {
+      height: 4px;
+      background: rgba(255,255,255,0.5);
+      margin-top: 8px;
+      animation: shrink linear forwards;
+    }
+    @keyframes shrink {
+      from { width: 100%; }
+      to { width: 0%; }
+    }
+    .notification .bg-icon {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      opacity: 0.1;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .notification .bg-icon img {
+      width: 350px;
+      height: auto;
+      rotate: 306deg;
+      position: sticky;
+    }
+  </style>
+</head>
+<body>
+
+<script>
+  function createNotification({
+    title = "Заголовок",
+    message = "Сообщение",
+    icon = "check_circle",
+    color = "#4caf50",
+    progressColor = "rgb(255,255,255)",
+    svgURL = null,
+    duration = 5000
+  }) {
+    const wrapper = document.createElement("div");
+    wrapper.className = "notification";
+    wrapper.style.background = color;
+
+    wrapper.innerHTML = `
+      ${svgURL ? `<div class="bg-icon"><img src="${svgURL}" alt="BG" /></div>` : ''}
+      <div class="icon material-icons">${icon}</div>
+      <div class="content">
+        <div class="title">${title}</div>
+        <div class="message">${message}</div>
+        <div class="progress-bar" style="animation-duration:${duration}ms; background:${progressColor}"></div>
+      </div>
+    `;
+
+    document.body.appendChild(wrapper);
+    setTimeout(() => wrapper.remove(), duration);
+  }
+
+  // Пример вызова:
+  createNotification({
+    title: "Готово!",
+    message: "Данные успешно сохранены.",
+    icon: "done",
+    color: "#2e7d32",
+    progressColor: "#a5d6a7",
+    svgURL: "C:/Users/Admin/Downloads/eagle.svg",
+    duration: 5000000000000000
+  });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,34 @@
+#message {
+    display: inline-flex;
+    align-items: center;
+    background-color: #ffffff;
+    padding: 10px 20px;
+    border-radius: 5px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+    font-size: 1.2em;
+    color: #000000;
+    position: fixed;
+    bottom: -100px;
+    left: 50%;
+    transform: translateX(-50%);
+    opacity: 0;
+    transition: opacity 0.5s ease, bottom 0.5s ease;
+    font-family: Arial, sans-serif;
+    z-index: 9999;
+}
+
+#key {
+    display: inline-block;
+    background-color: #333333;
+    color: #ffffff;
+    padding: 5px 10px;
+    margin-left: 10px;
+    font-weight: bold;
+    border-radius: 3px;
+    min-width: 30px;
+    height: 30px;
+    line-height: 30px;
+    text-align: center;
+    white-space: nowrap;
+    font-family: Arial, sans-serif;
+}

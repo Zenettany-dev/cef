@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SAMP Universal Dialog System</title>
+<style>
+  @font-face {
+    font-family: 'Proxima Nova Bold';
+    src: url('css/fonts/ProximaNova-Bold.ttf') format('truetype');
+    font-weight: bold;
+    font-style: normal;
+  }
+
+  @font-face {
+    font-family: "Gotham-Medium";
+    src: url("css/fonts/Gotham Pro Medium.ttf");
+  }
+
+  body {
+    background-color: transparent;
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  .dialog:focus {
+      outline: none;
+  }
+
+  .dialog {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(1.5); 
+    transform-origin: center;
+    background: linear-gradient(to bottom right, #1a1a1c, #201f24);
+    border: 1px solid #444;
+    border-radius: 5px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    min-width: 450px;
+    max-width: 800px;
+    z-index: 1000;
+    color: #fff;
+    overflow: hidden;
+    white-space: normal;
+    word-wrap: break-word;
+    word-break: break-word;
+  }
+
+  .dialog::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: 
+          linear-gradient(to bottom, rgba(26, 26, 28, 0.6) 0%, rgba(32,31,36,0.1) 100%),
+          url('images/background.svg');
+      z-index: -1;
+  }
+
+  .dialog-header {
+    padding: 10px 20px;
+    cursor: move;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+  }
+
+  .dialog-header::after {
+    content: "";
+    flex-grow: 1;
+    height: 1px;
+    background: linear-gradient(to right, rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0));
+    align-self: center;
+    display: block;
+    margin-top: 10px;
+    margin-left: 5px;
+  }
+
+  .dialog-title {
+    font-weight: bold;
+    font-size: 20px;
+    color: #e69348;
+    text-transform: uppercase;
+    font-family: "Gotham-Medium", sans-serif;
+    margin-top: 10px;
+    letter-spacing: 0.155vh;
+  }
+
+  .dialog-content {
+    padding: 20px;
+    max-height: 400px;
+    overflow-y: auto;
+    scrollbar-width: 0;
+    margin-top: -15px;
+  }
+
+  .dialog-content:not(:has(.dialog-tablist)) {
+    padding: 20px;
+    max-height: 400px;
+    overflow-y: auto;
+    scrollbar-width: 0;
+    margin-top: -15px;
+  }
+
+  .dialog-content:has(.dialog-tablist) {
+    padding-bottom: 0;
+    max-height: 400px;
+    overflow-y: auto;
+    scrollbar-width: 0;
+    margin-top: -15px;
+  }
+
+  .dialog-text {
+    margin-bottom: -15px;
+    line-height: 1.5;
+    font-family: 'Proxima Nova Bold';
+    font-size: small;
+    white-space: pre-wrap;
+  } 
+
+  .dialog-buttons {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 20px;
+    border-bottom-left-radius: 5px;
+    border-bottom-right-radius: 5px;
+  }
+
+  .dialog-button {
+    padding: 12px 15px;
+    border: none;
+    border-radius: 1.5px;
+    cursor: pointer;
+    font-size: 12px;
+    min-width: 80px;
+    text-transform: uppercase;
+    font-family: 'Proxima Nova Bold';
+    transition: background-color 0.2s;
+    margin-bottom: 10px;
+  }
+
+  .dialog-button-primary {
+    background-image: linear-gradient(to right, #21a24d, #5fda55);
+    color: white;
+    flex: 1;
+    margin-right: 5px;
+    box-shadow: 0 1.5px 0 #2d682f;
+    transition: box-shadow 0.5s ease;
+  }
+
+  .dialog-button-primary:hover:not(:disabled) {
+    box-shadow: 0 1.5px 0 #2d682f, 0 3px 2px rgba(70, 180, 76, 0.3);
+  }
+
+  .dialog-button-secondary {
+    background-color: #3f3f41;
+    opacity: 0.7;
+    color: white;
+    flex: 1;
+    margin-left: 5px;
+    outline: 0.1px solid rgba(255, 255, 255, 0.3);
+    outline-offset: 0;
+    transition: outline 0.25s ease;
+  }
+
+  .dialog-button-secondary:hover {
+    outline: 0.3px solid rgba(255, 255, 255, 0.4);  
+  }
+
+  .dialog-input {
+    width: 100%;
+    height: 40px;
+    padding: 0 10px;
+    margin-top: 20px;
+    margin-bottom: -15px;
+    background-color: #000;
+    border: 1px solid #000;
+    color: #fff;
+    border-radius: 1px;
+    font-family: 'Gotham-Medium';
+    line-height: 40px;
+  }
+
+  .dialog-input:focus {
+    outline: none;
+  }
+
+  .dialog-tablist {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    max-height: 300px;
+    overflow-y: auto;
+  }
+
+  .dialog-tablist .row {
+    display: flex;
+    border-radius: 2px;
+    padding: 6px 8px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    background-color: rgba(0, 0, 0, 0.5);
+  }
+
+  .dialog-tablist .row.header {
+    font-weight: bold;
+    color: #e69348;
+    background: transparent;
+    box-shadow: none;
+    cursor: default;
+    margin-top: -10px;
+    margin-bottom: 2px;
+  }
+
+  .dialog-tablist .cell {
+    flex: 1;
+    padding: 4px 6px;
+    font-family: 'Proxima Nova Bold';
+    font-size: 14px;
+  }
+
+  .dialog-tablist .row.selected {
+    background-color: #e69348;
+    color: #2e302b;
+    box-shadow: 0 0 5px rgba(230, 147, 72, 0.5);
+  }
+
+  .dialog-tablist::-webkit-scrollbar {
+    width: 6px;
+  }
+  .dialog-tablist::-webkit-scrollbar-thumb {
+    background-color: #e69348;
+    border-radius: 3px;
+  }
+</style>
+</head>
+<body>
+
+<div id="dialog-container"></div>
+
+<script>
+  let currentDialog = null;
+  let isDragging = false;
+  let dragOffsetX = 0;
+  let dragOffsetY = 0;
+  let selectedListItem = -1;
+  let inputText = "";
+  let currentDialogStyle = -1;
+  let dialogID = -1;
+  let dialogScale = 1.5;
+
+  const DIALOG_STYLE_MSGBOX = 0;
+  const DIALOG_STYLE_INPUT = 1;
+  const DIALOG_STYLE_LIST = 2;
+  const DIALOG_STYLE_TABLIST = 4;
+  const DIALOG_STYLE_TABLIST_HEADERS = 5;
+
+  function showDialog(dialogid, style, title, text, button1, button2) {
+    if (currentDialog) {
+      try { document.getElementById("dialog-container").removeChild(currentDialog); } catch (e) {}
+    }
+
+    selectedListItem = -1;
+    inputText = "";
+    currentDialogStyle = style;
+    dialogID = dialogid;
+
+    const dialog = document.createElement("div");
+    dialog.className = "dialog";
+    dialog.style.transform = `translate(-50%, -50%) scale(${dialogScale})`;
+    dialog.setAttribute("tabindex", "0");
+
+    const header = document.createElement("div");
+    header.className = "dialog-header";
+    const titleElement = document.createElement("div");
+    titleElement.className = "dialog-title";
+    titleElement.textContent = title;
+    header.appendChild(titleElement);
+
+    let rect;
+    header.onmousedown = (e) => {
+      isDragging = true;
+      rect = dialog.getBoundingClientRect();
+      dragOffsetX = e.clientX - rect.left;
+      dragOffsetY = e.clientY - rect.top;
+    };
+    document.onmousemove = (e) => {
+      if (isDragging && rect) {
+        dialog.style.left = e.clientX - dragOffsetX + (rect.width/2) + "px";
+        dialog.style.top = e.clientY - dragOffsetY + (rect.height/2) + "px";
+        dialog.style.transform = `translate(-50%, -50%) scale(${dialogScale})`;
+      }
+    };
+    document.onmouseup = () => { isDragging = false; };
+
+    dialog.appendChild(header);
+
+    const content = document.createElement("div");
+    content.className = "dialog-content";
+    dialog.appendChild(content);
+
+    const processedText = processColorEmbedding(text);
+
+    if (style === DIALOG_STYLE_MSGBOX) {
+      const textElement = document.createElement("div");
+      textElement.className = "dialog-text";
+      textElement.innerHTML = processedText;
+      content.appendChild(textElement);
+    } 
+    else if (style === DIALOG_STYLE_INPUT) {
+      const textElement = document.createElement("div");
+      textElement.className = "dialog-text";
+      textElement.innerHTML = processedText;
+      const input = document.createElement("input");
+      input.className = "dialog-input";
+      input.placeholder = "‚ведите данные...";
+      input.type = "text";
+      input.oninput = (e) => { inputText = e.target.value; };
+      content.appendChild(textElement);
+      content.appendChild(input);
+    } 
+    else if (style === DIALOG_STYLE_LIST || style === DIALOG_STYLE_TABLIST || style === DIALOG_STYLE_TABLIST_HEADERS) {
+      createTablistDialog(content, processedText, style === DIALOG_STYLE_TABLIST_HEADERS);
+    }
+
+    const buttons = document.createElement("div");
+    buttons.className = "dialog-buttons";
+
+    const btn1 = document.createElement("button");
+    btn1.className = "dialog-button dialog-button-primary";
+    btn1.textContent = button1;
+    btn1.onclick = () => handleResponse(1);
+
+    if (button2 && button2.trim().length > 0) {
+      const btn2 = document.createElement("button");
+      btn2.className = "dialog-button dialog-button-secondary";
+      btn2.textContent = button2;
+      btn2.onclick = () => handleResponse(0);
+      buttons.appendChild(btn1);
+      buttons.appendChild(btn2);
+    } else {
+      buttons.appendChild(btn1);
+    }
+
+    dialog.appendChild(buttons);
+    document.getElementById("dialog-container").appendChild(dialog);
+    currentDialog = dialog;
+
+    const inputFocus = dialog.querySelector(".dialog-input");
+    if (inputFocus) inputFocus.focus(); else dialog.focus();
+
+    dialog.addEventListener("keydown", handleKeyboard);
+  }
+
+  function createTablistDialog(container, text, hasHeaders) {
+    const lines = text.split("\n");
+    const wrapper = document.createElement("div");
+    wrapper.className = "dialog-tablist";
+
+    if (hasHeaders && lines.length > 0) {
+      const headerRow = document.createElement("div");
+      headerRow.className = "row header";
+      lines[0].split("\t").forEach(h => {
+        const cell = document.createElement("div");
+        cell.className = "cell";
+        cell.innerHTML = h;
+        headerRow.appendChild(cell);
+      });
+      wrapper.appendChild(headerRow);
+      lines.shift();
+    }
+
+    lines.forEach((line, i) => {
+      if(!line.trim()) return;
+      const row = document.createElement("div");
+      row.className = "row";
+      row.dataset.index = i;
+      if (i === 0) { row.classList.add("selected"); selectedListItem = 0; inputText = line.split("\t")[0]; }
+
+      line.split("\t").forEach(col => {
+        const cell = document.createElement("div");
+        cell.className = "cell";
+        cell.innerHTML = col;
+        row.appendChild(cell);
+      });
+
+      row.onclick = () => {
+        wrapper.querySelectorAll(".row").forEach(r => r.classList.remove("selected"));
+        row.classList.add("selected");
+        selectedListItem = i;
+        inputText = row.firstChild.textContent;
+      };
+
+      row.ondblclick = () => {
+        selectedListItem = i;
+        inputText = row.firstChild.textContent;
+        handleResponse(1);
+      };
+
+      wrapper.appendChild(row);
+    });
+    container.appendChild(wrapper);
+  }
+
+  function handleResponse(buttonId) {
+    if (typeof mp !== 'undefined') {
+      mp.trigger("OnDialogResponse", dialogID, buttonId, selectedListItem, inputText);
+    } else if (typeof cef !== 'undefined') {
+      cef.emit("OnDialogResponse", dialogID, buttonId, selectedListItem, inputText);
+    }
+    console.log(`[PAWN OUT] ID: ${dialogID} | Button: ${buttonId} | Row: ${selectedListItem} | Input: ${inputText}`);
+    closeCEF();
+  }
+
+  function closeCEF() {
+    if (currentDialog) {
+      try {
+        document.getElementById("dialog-container").removeChild(currentDialog);
+        currentDialog = null;
+      } catch(e) {}
+    }
+    if (typeof cef !== 'undefined') {
+      cef.emit("game:showCursor", 0);
+      cef.emit("closeDialog");
+    }
+  }
+
+  function handleKeyboard(e) {
+    if (!currentDialog) return;
+    const rows = currentDialog.querySelectorAll(".dialog-tablist .row:not(.header)");
+    
+    if (e.key === "ArrowDown" && rows.length > 0) {
+      e.preventDefault();
+      rows[selectedListItem].classList.remove("selected");
+      selectedListItem = (selectedListItem === rows.length - 1) ? 0 : selectedListItem + 1;
+      rows[selectedListItem].classList.add("selected");
+      inputText = rows[selectedListItem].firstChild.textContent;
+      rows[selectedListItem].scrollIntoView({ block: "nearest" });
+    }
+    if (e.key === "ArrowUp" && rows.length > 0) {
+      e.preventDefault();
+      rows[selectedListItem].classList.remove("selected");
+      selectedListItem = (selectedListItem === 0) ? rows.length - 1 : selectedListItem - 1;
+      rows[selectedListItem].classList.add("selected");
+      inputText = rows[selectedListItem].firstChild.textContent;
+      rows[selectedListItem].scrollIntoView({ block: "nearest" });
+    }
+    if (e.key === "Enter") { e.preventDefault(); handleResponse(1); }
+    if (e.key === "Escape") { e.preventDefault(); handleResponse(0); }
+  }
+
+  function processColorEmbedding(text) {
+    let processed = text.replace(/\{([0-9A-Fa-f]{6})\}/g, (m, color) => `</span><span style="color: #${color};">`);
+    return `<span>${processed}</span>`;
+  }
+
+  if (typeof cef !== 'undefined') {
+    cef.on("showGameDialog", (dialogid, style, title, text, button1, button2) => {
+      showDialog(dialogid, style, title, text, button1, button2);
+    });
+  }
+</script>
+</body>
+</html>

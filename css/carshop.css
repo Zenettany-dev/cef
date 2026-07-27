@@ -1,0 +1,146 @@
+.carshop {
+    height: 100vh;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+    font-family: 'ProximaNova-Light', sans-serif;
+    width: 100vw;
+    height: 100vh;
+}
+.carshop .header {
+    text-align: center;
+    padding: 20px;
+    margin-top: 40px;
+}
+
+.carshop .car-name {
+    font-size: 32px;
+    margin-bottom: 10px;
+}
+
+.carshop .price {
+    color: #FFA500;
+    font-size: 24px;
+    margin-bottom: 15px;
+}
+
+.carshop .color-picker {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.carshop .color-dot {
+    width: 40px;
+    height: 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    border: 1.5px solid white;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.carshop .color-dot:hover {
+    transform: scale(1.1);
+}
+
+.carshop .color-dot.active {
+    box-shadow: 0 0 10px 5px rgba(255, 255, 255, 0.7);
+    transform: scale(1.2);
+}
+
+.carshop .info-section {
+    position: absolute;
+    left: 40px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 300px;
+}
+
+.carshop .info-title {
+    font-size: 24px;
+    margin-bottom: 20px;
+}
+
+.carshop .stat-bar {
+    margin-bottom: 33px;
+}
+
+.carshop .stat-label {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+}
+
+.carshop .stat-progress {
+    height: 4px;
+    background: rgba(255, 255, 255, 0.2);
+    position: relative;
+}
+
+.carshop .stat-progress-fill {
+    height: 100%;
+    background: white;
+    position: absolute;
+}
+
+.carshop .footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.carshop .hints {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.carshop .buttons {
+top: 10px;
+    display: flex;
+    gap: 10px;
+}
+
+.carshop .btn {
+    font-family: 'ProximaNova-Light', sans-serif;
+    padding: 25px 80px;
+    border: none;
+    border-radius: 3.5px;
+    cursor: pointer;
+    font-size: 18px;
+    font-weight: 450;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.carshop .btn-test {
+    background: linear-gradient(90deg, rgba(74,162,242,1) 0%, rgba(34,120,220,1) 100%);
+    color: #2c3a21;
+}
+
+.carshop .btn-buy {
+    background: linear-gradient(90deg,rgb(89, 138, 40) 0%, rgb(113, 176, 51) 0%, rgb(113, 176, 51) 100%);
+    color: #2c3a21;
+    
+}
+
+.carshop .arrows {
+    position: absolute;
+    top: 11%;
+    left: 10%;
+    display: flex;
+    justify-content: space-between;
+    padding: 0 600px;
+    transform: translateY(-50%);
+    pointer-events: none;
+}
+
+.arrow {
+    width: 50px;
+    height: 50px;
+    cursor: pointer;
+    pointer-events: auto;
+    margin-right: 20cm;
+}

@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>ФСБ Панель</title>
+<style>
+@font-face { font-family:'Proxima Nova Bold'; src:url('css/fonts/ProximaNova-Bold.ttf') format('truetype'); }
+@font-face { font-family:'Gotham-Medium'; src:url('css/fonts/Gotham Pro Medium.ttf') format('truetype'); }
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100vw;height:100vh;background:transparent;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+.dialog{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(1.5);transform-origin:center;background:linear-gradient(to bottom right,#1a1a1c,#201f24);border:1px solid #444;border-radius:5px;box-shadow:0 0 20px rgba(0,0,0,0.5);min-width:450px;max-width:800px;color:#fff;user-select:none;overflow:hidden;display:none;z-index:100;}
+.dialog.active{display:block;}
+.dialog::before{content:"";position:absolute;top:0;left:0;right:0;bottom:0;background:linear-gradient(to bottom,rgba(26,26,28,0.6) 0%,rgba(32,31,36,0.1) 100%),url('images/background.svg');z-index:-1;}
+.dialog-header{padding:10px 20px;cursor:move;display:flex;justify-content:space-between;align-items:center;}
+.dialog-header::after{content:"";flex-grow:1;height:1px;background:linear-gradient(to right,rgba(255,255,255,0.25),rgba(255,255,255,0));align-self:center;margin-top:10px;margin-left:5px;}
+.dialog-title{font-family:'Gotham-Medium',sans-serif;font-size:20px;color:#e69348;text-transform:uppercase;margin-top:10px;letter-spacing:0.155vh;}
+.dialog-content{padding:10px 20px 0;max-height:400px;overflow-y:auto;scrollbar-width:none;}
+.dialog-content::-webkit-scrollbar{width:4px;}
+.dialog-content::-webkit-scrollbar-thumb{background:#e69348;border-radius:2px;}
+.dialog-list{display:flex;flex-direction:column;gap:4px;margin-bottom:10px;}
+.dialog-list-item{padding:10px 12px;cursor:pointer;background:rgba(0,0,0,0.5);border-radius:2px;font-family:'Proxima Nova Bold',sans-serif;font-size:14px;transition:background 0.15s;}
+.dialog-list-item:hover{background:#444;}
+.dialog-list-item.selected{background:#e69348;color:#2e302b;box-shadow:0 0 5px rgba(230,147,72,0.5);}
+.dialog-text{font-family:'Proxima Nova Bold',sans-serif;font-size:13px;line-height:1.6;margin-bottom:10px;color:#ccc;}
+.dialog-input-wrap{position:relative;margin:6px 0 10px;}
+.dialog-input{width:100%;height:40px;padding:0 50px 0 10px;background:#000;border:1px solid #000;color:#aaa;border-radius:1px;font-family:'Gotham-Medium',sans-serif;font-size:13px;line-height:40px;}
+.dialog-input:focus{outline:none;color:#fff;}
+.input-lang{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-family:'Proxima Nova Bold',sans-serif;font-size:11px;color:#888;pointer-events:none;}
+.section-label{font-family:'Gotham-Medium',sans-serif;font-size:11px;color:#888;text-transform:uppercase;letter-spacing:0.1em;margin:6px 0 2px;}
+.info-table{width:100%;border-collapse:collapse;margin-bottom:10px;font-family:'Proxima Nova Bold',sans-serif;font-size:13px;}
+.info-table tr{border-bottom:1px solid rgba(255,255,255,0.06);}
+.info-table tr:first-child{background:#e69348;color:#2e302b;}
+.info-table td{padding:8px 12px;}
+.info-table td:last-child{color:#e69348;}
+.info-table tr:first-child td{color:#2e302b !important;font-size:14px;}
+.wb-row{display:flex;background:rgba(0,0,0,0.4);border-radius:2px;padding:6px 10px;margin-bottom:3px;font-family:'Proxima Nova Bold',sans-serif;font-size:12px;gap:8px;}
+.wb-date{color:#888;min-width:90px;}
+.wb-action{color:#e69348;min-width:80px;}
+.wb-frac{color:#aaa;flex:1;}
+.wb-by{color:#666;min-width:80px;text-align:right;}
+.find-stats{display:flex;gap:8px;margin-bottom:10px;font-family:'Proxima Nova Bold',sans-serif;font-size:12px;}
+.find-stat{flex:1;background:rgba(0,0,0,0.4);border-radius:2px;padding:6px;text-align:center;}
+.find-stat .val{font-size:18px;color:#e69348;display:block;}
+.find-stat .lbl{color:#888;}
+.find-member{display:flex;align-items:center;background:rgba(0,0,0,0.4);border-radius:2px;padding:6px 10px;margin-bottom:3px;font-family:'Proxima Nova Bold',sans-serif;font-size:12px;gap:8px;}
+.find-member .mid{color:#e69348;min-width:28px;}
+.find-member .mname{flex:1;}
+.find-member .mrank{color:#aaa;min-width:100px;}
+.find-member .mdept{color:#888;min-width:80px;}
+.find-member .mstatus{min-width:80px;text-align:right;font-size:11px;}
+.st-active{color:#4caf50;}
+.st-off{color:#aaa;}
+.st-sus{color:#f44;}
+.dialog-buttons{display:flex;justify-content:space-between;padding:10px 20px;gap:6px;}
+.btn{flex:1;padding:12px 15px;border:none;border-radius:1.5px;cursor:pointer;font-size:12px;text-transform:uppercase;font-family:'Proxima Nova Bold',sans-serif;margin-bottom:10px;transition:background 0.2s,box-shadow 0.3s;}
+.btn-primary{background:linear-gradient(to right,#21a24d,#5fda55);color:#fff;box-shadow:0 1.5px 0 #2d682f;}
+.btn-primary:hover{box-shadow:0 1.5px 0 #2d682f,0 3px 2px rgba(70,180,76,0.3);}
+.btn-secondary{background:#3f3f41;opacity:0.7;color:#fff;outline:0.1px solid rgba(255,255,255,0.3);}
+.btn-secondary:hover{opacity:1;}
+.stub-text{font-family:'Proxima Nova Bold',sans-serif;font-size:13px;color:#888;text-align:center;padding:20px 0 10px;}
+.skin-item{background:rgba(0,0,0,0.5);border-radius:2px;padding:10px 12px;font-family:'Proxima Nova Bold',sans-serif;font-size:14px;cursor:pointer;border:1px solid transparent;transition:all 0.15s;margin-bottom:4px;}
+.skin-item:hover{border-color:#e69348;color:#e69348;}
+.skin-item.selected{background:#e69348;color:#2e302b;}
+.disguise-option{background:rgba(0,0,0,0.5);border-radius:2px;padding:10px 12px;font-family:'Proxima Nova Bold',sans-serif;font-size:14px;cursor:pointer;transition:background 0.15s;margin-bottom:4px;}
+.disguise-option:hover{background:#333;}
+.err-msg{font-family:'Proxima Nova Bold',sans-serif;font-size:13px;color:#f44336;background:rgba(244,67,54,0.1);border-radius:2px;padding:6px 10px;margin-bottom:8px;display:none;}
+.err-msg.show{display:block;}
+.org-row{display:flex;justify-content:space-between;}
+.org-count{color:#e69348;}
+</style>
+</head>
+<body>
+
+<div class="dialog active" id="dlg-main">
+  <div class="dialog-header"><div class="dialog-title">ФСБ</div></div>
+  <div class="dialog-content">
+    <div class="dialog-list" id="main-list">
+      <div class="dialog-list-item selected" data-idx="0">1. Прослушка организации</div>
+      <div class="dialog-list-item" data-idx="1">2. Прослушка SMS и вызовов</div>
+      <div class="dialog-list-item" data-idx="2">3. Досье</div>
+      <div class="dialog-list-item" data-idx="3">4. Отметить подозреваемого</div>
+      <div class="dialog-list-item" data-idx="4">5. Внедрение</div>
+      <div class="dialog-list-item" data-idx="5">6. Поиск трудовой книжки</div>
+      <div class="dialog-list-item" data-idx="6">7. Уволить сотрудника</div>
+      <div class="dialog-list-item" data-idx="7">8. Выдача выговора</div>
+      <div class="dialog-list-item" data-idx="8">9. Снять выговор</div>
+      <div class="dialog-list-item" data-idx="9">10. Просмотр состава организаций</div>
+    </div>
+  </div>
+  <div class="dialog-buttons">
+    <button class="btn btn-primary" id="main-select">Выбрать</button>
+    <button class="btn btn-secondary" onclick="closePanel()">Назад</button>
+  </div>
+</div>
+
+<div class="dialog" id="dlg-listen">
+  <div class="dialog-header"><div class="dialog-title">Прослушка организаций</div></div>
+  <div class="dialog-content">
+    <div class="dialog-list" id="listen-list"></div>
+  </div>
+  <div class="dialog-buttons">
+    <button class="btn btn-primary" id="listen-confirm">Выбрать</button>
+    <button class="btn btn-secondary" onclick="showMain()">Назад</button>
+  </div>
+</div>
+
+<div class="dialog" id="dlg-dossier">
+  <div class="dialog-header"><div class="dialog-title">Досье</div></div>
+  <div class="dialog-content">
+    <div class="dialog-text">Введите ID или ник игрока, чтобы узнать всю информацию о нем</div>
+    <div class="dialog-input-wrap"><input class="dialog-input" id="dossier-in" placeholder="Нажмите для ввода"><span class="input-lang">RU</span></div>
+    <div class="err-msg" id="dossier-err"></div>
+  </div>
+  <div class="dialog-buttons">
+    <button class="btn btn-primary" onclick="submitDossier()">Найти</button>
+    <button class="btn btn-secondary" onclick="showMain()">Назад</button>
+  </div>
+</div>
+
+<div class="dialog" id="dlg-dossier-result">
+  <div class="dialog-header"><div class="dialog-title" id="dossier-title">Досье</div></div>
+  <div class="dialog-content"><table class="info-table" id="dossier-table"></table></div>
+  <div class="dialog-buttons">
+    <button class="btn btn-primary" onclick="showDlg('dlg-dossier')">Назад</button>
+  </div>
+</div>
+
+<div class="dialog" id="dlg-suspect">
+  <div class="dialog-header"><div class="dialog-title">Отметить подозреваемого</div></div>
+  <div class="dialog-content">
+    <div class="dialog-text">Введите ID или ник игрока, чтобы узнать его текущее местоположение</div>
+    <div class="dialog-input-wrap"><input class="dialog-input" id="suspect-in" placeholder="Нажмите для ввода"><span class="input-lang">RU</span></div>
+    <div class="err-msg" id="suspect-err"></div>
+  </div>
+  <div class="dialog-buttons">
+    <button class="btn btn-primary" onclick="submitSuspect()">Найти</button>
+    <button class="btn btn-secondary" onclick="showMain()">Назад</button>
+  </div>
+</div>
+
+<div class="dialog" id="dlg-disguise">
+  <div class="dialog-header"><div class="dialog-title">Внедрение</div></div>
+  <div class="dialog-content">
+    <div class="disguise-option" onclick="openDisguiseOrg()">Переодеться в организацию</div>
+    <div class="disguise-option" onclick="showDlg('dlg-disguise-civ')">Переодеться в гражданку</div>
+    <div class="disguise-option" onclick="removeDisguise()">Снять маскировку</div>
+  </div>
+  <div class="dialog-buttons">
+    <button class="btn btn-secondary" onclick="showMain()">Назад</button>
+  </div>
+</div>
+
+<div class="dialog" id="dlg-disguise-org">
+  <div class="dialog-header"><div class="dialog-title">Выбор облика</div></div>
+  <div class="dialog-content"><div class="dialog-list" id="dorg-list"></div></div>
+  <div class="dialog-buttons">
+    <button class="btn btn-primary" id="dorg-next">Далее</button>
+    <button class="btn btn-secondary" onclick="showDlg('dlg-disguise')">Назад</button>
+  </div>
+</div>
+
+<div class="dialog" id="dlg-disguise-rank">
+  <div class="dialog-header"><div class="dialog-title" id="drank-title">Выбор ранга</div></div>
+  <div class="dialog-content"><div class="dialog-list" id="drank-list"></div></div>
+  <div class="dialog-buttons">
+    <button class="btn btn-primary" id="drank-next">Далее</button>
+    <button class="btn btn-secondary" onclick="showDlg('dlg-disguise-org')">Назад</button>
+  </div>
+</div>
+
+<div class="dialog" id="dlg-disguise-otdel">
+  <div class="dialog-header"><div class="dialog-title">Выбор отдела</div></div>
+  <div class="dialog-content"><div class="dialog-list" id="dotdel-list"></div></div>
+  <div class="dialog-buttons">
+    <button class="btn btn-primary" id="dotdel-next">Далее</button>
+    <button class="btn btn-secondary" onclick="showDlg('dlg-disguise-rank')">Назад</button>
+  </div>
+</div>
+
+<div class="dialog" id="dlg-disguise-skin">
+  <div class="dialog-header"><div class="dialog-title">Выбор скина</div></div>
+  <div class="dialog-content"><div class="dialog-list" id="dskin-list"></div></div>
+  <div class="dialog-buttons">
+    <button class="btn btn-primary" id="dskin-confirm">Принять</button>
+    <button class="btn btn-secondary" onclick="showDlg('dlg-disguise-otdel')">Назад</button>
+  </div>
+</div>
+
+<div class="dialog" id="dlg-disguise-civ">
+  <div class="dialog-header"><div class="dialog-title">Гражданская одежда</div></div>
+  <div class="dialog-content"><div class="dialog-list" id="dciv-list"></div></div>
+  <div class="dialog-buttons">
+    <button class="btn btn-primary" id="dciv-confirm">Принять</button>
+    <button class="btn btn-secondary" onclick="showDlg('dlg-disguise')">Назад</button>
+  </div>
+</div>
+
+<div class="dialog" id="dlg-stub">
+  <div class="dialog-header"><div class="dialog-title" id="stub-title">Раздел</div></div>
+  <div class="dialog-content"><div class="stub-text">Данный раздел находится в разработке.<br>Скоро будет доступен.</div></div>
+  <div class="dialog-buttons"><button class="btn btn-secondary" onclick="showMain()">Назад</button></div>
+</div>
+
+<div class="dialog" id="dlg-fire">
+  <div class="dialog-header"><div class="dialog-title">Уволить сотрудника</div></div>
+  <div class="dialog-content">
+    <div class="section-label">Ник игрока</div>
+    <div class="dialog-input-wrap"><input class="dialog-input" id="fire-name" placeholder="Нажмите для ввода"><span class="input-lang">RU</span></div>
+    <div class="section-label">Причина увольнения</div>
+    <div class="dialog-input-wrap"><input class="dialog-input" id="fire-reason" placeholder="Нажмите для ввода"><span class="input-lang">RU</span></div>
+    <div class="err-msg" id="fire-err"></div>
+  </div>
+  <div class="dialog-buttons">
+    <button class="btn btn-primary" onclick="submitFire()">Уволить</button>
+    <button class="btn btn-secondary" onclick="showMain()">Назад</button>
+  </div>
+</div>
+
+<div class="dialog" id="dlg-unwarn">
+  <div class="dialog-header"><div class="dialog-title">Снять выговор</div></div>
+  <div class="dialog-content">
+    <div class="dialog-text">Введите ник сотрудника для снятия выговора</div>
+    <div class="section-label">Ник игрока</div>
+    <div class="dialog-input-wrap"><input class="dialog-input" id="unwarn-name" placeholder="Нажмите для ввода"><span class="input-lang">RU</span></div>
+    <div class="section-label">Причина снятия</div>
+    <div class="dialog-input-wrap"><input class="dialog-input" id="unwarn-reason" placeholder="Нажмите для ввода"><span class="input-lang">RU</span></div>
+    <div class="err-msg" id="unwarn-err"></div>
+  </div>
+  <div class="dialog-buttons">
+    <button class="btn btn-primary" onclick="submitUnwarn()">Снять</button>
+    <button class="btn btn-secondary" onclick="showMain()">Назад</button>
+  </div>
+</div>
+
+<div class="dialog" id="dlg-wb">
+  <div class="dialog-header"><div class="dialog-title">Поиск трудовой книжки</div></div>
+  <div class="dialog-content">
+    <div class="dialog-text">Введите ник игрока, чтобы запросить трудовую книжку</div>
+    <div class="dialog-input-wrap"><input class="dialog-input" id="wb-in" placeholder="Нажмите для ввода"><span class="input-lang">RU</span></div>
+    <div class="err-msg" id="wb-err"></div>
+  </div>
+  <div class="dialog-buttons">
+    <button class="btn btn-primary" onclick="submitWb()">Найти</button>
+    <button class="btn btn-secondary" onclick="showMain()">Назад</button>
+  </div>
+</div>
+
+<div class="dialog" id="dlg-warn">
+  <div class="dialog-header"><div class="dialog-title">Выдача выговора</div></div>
+  <div class="dialog-content">
+    <div class="dialog-text">Введите ник сотрудника для выдачи выговора</div>
+    <div class="section-label">Ник игрока</div>
+    <div class="dialog-input-wrap"><input class="dialog-input" id="warn-name" placeholder="Нажмите для ввода"><span class="input-lang">RU</span></div>
+    <div class="section-label">Причина</div>
+    <div class="dialog-input-wrap"><input class="dialog-input" id="warn-reason" placeholder="Нажмите для ввода"><span class="input-lang">RU</span></div>
+    <div class="err-msg" id="warn-err"></div>
+  </div>
+  <div class="dialog-buttons">
+    <button class="btn btn-primary" onclick="submitWarn()">Выдать</button>
+    <button class="btn btn-secondary" onclick="showMain()">Назад</button>
+  </div>
+</div>
+
+<div class="dialog" id="dlg-org-stats">
+  <div class="dialog-header"><div class="dialog-title" id="org-stats-title">Состав организаций</div></div>
+  <div class="dialog-content"><div class="dialog-list" id="org-stats-list"></div></div>
+  <div class="dialog-buttons">
+    <button class="btn btn-primary" id="org-stats-view">Просмотр</button>
+    <button class="btn btn-secondary" onclick="showMain()">Назад</button>
+  </div>
+</div>
+
+<div class="dialog" id="dlg-org-members">
+  <div class="dialog-header"><div class="dialog-title" id="org-members-title">Состав</div></div>
+  <div class="dialog-content">
+    <div class="find-stats" id="org-find-stats"></div>
+    <div id="org-members-list"></div>
+  </div>
+  <div class="dialog-buttons">
+    <button class="btn btn-secondary" id="org-members-back">Назад</button>
+  </div>
+</div>
+
+<script>
+const FRACS=[{id:1,name:'Правительство'},{id:2,name:'ФСБ'},{id:3,name:'ДПС'},{id:4,name:'ППС'},{id:5,name:'ЕСС'},{id:6,name:'ВЧ'},{id:7,name:'Байкеры'},{id:8,name:'Скинхеды'},{id:9,name:'Русская мафия'},{id:10,name:'Кавказская мафия'}];
+const CIV_SKINS=[160,85,39,67,144,112,121];
+const st={
+  listenFrac:-1, listenSel:0,
+  mainSel:0,
+  dFrac:0, dRank:0, dOtdel:-1, dSkin:0,
+  dFracSel:0, dRankSel:0, dOtdelSel:-1, dSkinSel:0,
+  civSkin:CIV_SKINS[0],
+  orgList:[], orgSel:0,
+  findMembers:[],
+};
+
+function showDlg(id){document.querySelectorAll('.dialog').forEach(d=>d.classList.remove('active'));document.getElementById(id).classList.add('active');const inp=document.querySelector('#'+id+' .dialog-input');if(inp)inp.focus();}
+function showMain(){showDlg('dlg-main');}
+function closePanel(){if(typeof cef!=='undefined')cef.emit('fsbpanel:close','1');}
+function showErr(id,msg){const el=document.getElementById(id);el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),3000);}
+
+function makeDraggable(id){
+  const d=document.getElementById(id);
+  const h=d.querySelector('.dialog-header');
+  let drag=false,ox=0,oy=0;
+  h.onmousedown=e=>{drag=true;const r=d.getBoundingClientRect();ox=e.clientX-r.left;oy=e.clientY-r.top;};
+  document.addEventListener('mousemove',e=>{if(!drag)return;d.style.left=(e.clientX-ox)+'px';d.style.top=(e.clientY-oy)+'px';d.style.transform='scale(1.5)';d.style.transformOrigin='top left';});
+  document.addEventListener('mouseup',()=>{drag=false;});
+}
+['dlg-main','dlg-listen','dlg-dossier','dlg-dossier-result','dlg-suspect','dlg-disguise','dlg-disguise-org','dlg-disguise-rank','dlg-disguise-otdel','dlg-disguise-skin','dlg-disguise-civ','dlg-stub','dlg-fire','dlg-unwarn','dlg-warn','dlg-wb','dlg-org-stats','dlg-org-members'].forEach(makeDraggable);
+
+function makeList(listEl,items,onSel,initSel){
+  listEl.innerHTML='';
+  let sel=initSel||0;
+  items.forEach((item,i)=>{
+    const el=document.createElement('div');
+    el.className='dialog-list-item'+(i===sel?' selected':'');
+    if(typeof item==='object'&&item.html){el.innerHTML=item.html;}else{el.textContent=item;}
+    el.onclick=()=>{listEl.querySelectorAll('.dialog-list-item').forEach(x=>x.classList.remove('selected'));el.classList.add('selected');sel=i;if(onSel)onSel(i);};
+    listEl.appendChild(el);
+  });
+  return ()=>sel;
+}
+
+const mainItems=document.querySelectorAll('#main-list .dialog-list-item');
+mainItems.forEach(item=>{item.onclick=()=>{mainItems.forEach(i=>i.classList.remove('selected'));item.classList.add('selected');st.mainSel=parseInt(item.dataset.idx);};});
+document.getElementById('main-select').onclick=()=>{
+  switch(st.mainSel){
+    case 0:openListen();break;
+    case 1:openStub('Прослушка SMS и вызовов');break;
+    case 2:showDlg('dlg-dossier');break;
+    case 3:showDlg('dlg-suspect');break;
+    case 4:showDlg('dlg-disguise');break;
+    case 5:showDlg('dlg-wb');break;
+    case 6:showDlg('dlg-fire');break;
+    case 7:showDlg('dlg-warn');break;
+    case 8:showDlg('dlg-unwarn');break;
+    case 9:openOrgStats();break;
+  }
+};
+document.addEventListener('keydown',e=>{
+  const a=document.querySelector('.dialog.active');
+  if(!a)return;
+  if(e.key==='Escape'){closePanel();return;}
+  if(a.id!=='dlg-main')return;
+  if(e.key==='ArrowDown'){const n=Math.min(st.mainSel+1,mainItems.length-1);mainItems[st.mainSel].classList.remove('selected');st.mainSel=n;mainItems[n].classList.add('selected');mainItems[n].scrollIntoView({block:'nearest'});}
+  else if(e.key==='ArrowUp'){const p=Math.max(st.mainSel-1,0);mainItems[st.mainSel].classList.remove('selected');st.mainSel=p;mainItems[p].classList.add('selected');mainItems[p].scrollIntoView({block:'nearest'});}
+  else if(e.key==='Enter')document.getElementById('main-select').click();
+});
+
+function openStub(t){document.getElementById('stub-title').textContent=t;showDlg('dlg-stub');}
+
+function openListen(){
+  const list=document.getElementById('listen-list');
+  const items=[{label:'Выключить прослушку',frac:-1},...FRACS.filter(f=>f.id!==2).map(f=>({label:f.name,frac:f.id}))];
+  let selFrac=st.listenFrac;
+  list.innerHTML='';
+  items.forEach((it,i)=>{
+    const el=document.createElement('div');
+    el.className='dialog-list-item'+(it.frac===selFrac?' selected':'');
+    el.textContent=it.frac===-1?'Выключить прослушку':(i)+'. '+it.label;
+    el.onclick=()=>{list.querySelectorAll('.dialog-list-item').forEach(x=>x.classList.remove('selected'));el.classList.add('selected');selFrac=it.frac;};
+    list.appendChild(el);
+  });
+  document.getElementById('listen-confirm').onclick=()=>{
+    st.listenFrac=selFrac;
+    if(typeof cef!=='undefined')cef.emit('fsbpanel:listen',String(selFrac));
+    showMain();
+  };
+  showDlg('dlg-listen');
+}
+if(typeof cef!=='undefined')cef.on('fsbpanel:listenstate',v=>{st.listenFrac=parseInt(v);});
+
+function submitDossier(){
+  const v=document.getElementById('dossier-in').value.trim();
+  if(!v){showErr('dossier-err','Введите ID или ник');return;}
+  if(typeof cef!=='undefined')cef.emit('fsbpanel:dossier',v);
+}
+if(typeof cef!=='undefined'){
+  cef.on('fsbpanel:dossier_result',json=>{
+    try{
+      const d=JSON.parse(json);
+      if(d.error){showErr('dossier-err',d.error);return;}
+      document.getElementById('dossier-title').textContent='Досье на '+d.name.toUpperCase();
+      const tbl=document.getElementById('dossier-table');
+      tbl.innerHTML='';
+      const rows=[['Имя и фамилия',d.name],['Проживание в области',(d.age||'—')+' лет'],['Законопослушность',d.law||'—'],['Судимости',(d.convictions||'0')+' шт.'],['',''],['Место работы',d.job||'Безработный'],['Должность',d.rank||'—'],['Семейное положение',d.family||'—'],['Прописка',d.reg||'—'],['',''],['Транспорт',d.car||'Нет']];
+      rows.forEach(([k,v],i)=>{
+        const tr=document.createElement('tr');
+        if(i===0){const td=document.createElement('td');td.colSpan=2;td.textContent=k+(k&&v?': ':'')+v;tr.appendChild(td);}
+        else if(!k&&!v){const td=document.createElement('td');td.colSpan=2;td.style.padding='3px 0';tr.appendChild(td);}
+        else{const t1=document.createElement('td');t1.textContent=k;const t2=document.createElement('td');t2.textContent=v;tr.appendChild(t1);tr.appendChild(t2);}
+        tbl.appendChild(tr);
+      });
+      showDlg('dlg-dossier-result');
+    }catch(e){}
+  });
+}
+
+function submitSuspect(){
+  const v=document.getElementById('suspect-in').value.trim();
+  if(!v){showErr('suspect-err','Введите ID или ник');return;}
+  if(typeof cef!=='undefined')cef.emit('fsbpanel:suspect',v);
+}
+if(typeof cef!=='undefined'){
+  cef.on('fsbpanel:suspect_result',json=>{
+    try{
+      const d=JSON.parse(json);
+      if(d.error){showErr('suspect-err',d.error);return;}
+      document.getElementById('suspect-in').value='';
+      showMain();
+    }catch(e){}
+  });
+}
+
+function openDisguiseOrg(){
+  const fracs=FRACS.filter(f=>f.id!==2);
+  let selIdx=0;
+  const list=document.getElementById('dorg-list');
+  list.innerHTML='';
+  fracs.forEach((f,i)=>{
+    const el=document.createElement('div');
+    el.className='dialog-list-item'+(i===0?' selected':'');
+    el.textContent=(i+1)+'. '+f.name;
+    el.onclick=()=>{list.querySelectorAll('.dialog-list-item').forEach(x=>x.classList.remove('selected'));el.classList.add('selected');selIdx=i;};
+    list.appendChild(el);
+  });
+  document.getElementById('dorg-next').onclick=()=>{
+    st.dFrac=fracs[selIdx].id;
+    document.getElementById('drank-title').textContent='Выбор ранга — '+fracs[selIdx].name;
+    if(typeof cef!=='undefined')cef.emit('fsbpanel:get_ranks',String(st.dFrac));
+    showDlg('dlg-disguise-rank');
+  };
+  showDlg('dlg-disguise-org');
+}
+
+if(typeof cef!=='undefined'){
+  cef.on('fsbpanel:ranks',json=>{
+    try{
+      const ranks=JSON.parse(json);
+      let selIdx=0;
+      const list=document.getElementById('drank-list');
+      list.innerHTML='';
+      ranks.forEach((r,i)=>{
+        const el=document.createElement('div');
+        el.className='dialog-list-item'+(i===0?' selected':'');
+        el.textContent=(i+1)+'. '+r.name;
+        el.onclick=()=>{list.querySelectorAll('.dialog-list-item').forEach(x=>x.classList.remove('selected'));el.classList.add('selected');selIdx=i;};
+        list.appendChild(el);
+      });
+      document.getElementById('drank-next').onclick=()=>{
+        st.dRank=selIdx+1;
+        if(typeof cef!=='undefined')cef.emit('fsbpanel:get_depts',String(st.dFrac));
+        showDlg('dlg-disguise-otdel');
+      };
+    }catch(e){}
+  });
+
+  cef.on('fsbpanel:depts',json=>{
+    try{
+      const depts=JSON.parse(json);
+      let selIdx=-1;
+      const list=document.getElementById('dotdel-list');
+      list.innerHTML='';
+      const noneEl=document.createElement('div');
+      noneEl.className='dialog-list-item selected';
+      noneEl.textContent='Без отдела';
+      noneEl.onclick=()=>{list.querySelectorAll('.dialog-list-item').forEach(x=>x.classList.remove('selected'));noneEl.classList.add('selected');selIdx=-1;};
+      list.appendChild(noneEl);
+      depts.forEach((d,i)=>{
+        const el=document.createElement('div');
+        el.className='dialog-list-item';
+        el.textContent=(i+1)+'. '+d.name;
+        el.onclick=()=>{list.querySelectorAll('.dialog-list-item').forEach(x=>x.classList.remove('selected'));el.classList.add('selected');selIdx=i;};
+        list.appendChild(el);
+      });
+      document.getElementById('dotdel-next').onclick=()=>{
+        st.dOtdel=selIdx;
+        if(typeof cef!=='undefined')cef.emit('fsbpanel:get_skins',String(st.dFrac));
+        showDlg('dlg-disguise-skin');
+      };
+    }catch(e){}
+  });
+
+  cef.on('fsbpanel:skins',json=>{
+    try{
+      const skins=JSON.parse(json);
+      let selSkin=skins[0]||0;
+      st.dSkin=selSkin;
+      const list=document.getElementById('dskin-list');
+      list.innerHTML='';
+      skins.forEach(s=>{
+        const el=document.createElement('div');
+        el.className='dialog-list-item'+(s===selSkin?' selected':'');
+        el.textContent='Скин '+s;
+        el.onclick=()=>{list.querySelectorAll('.dialog-list-item').forEach(x=>x.classList.remove('selected'));el.classList.add('selected');selSkin=s;st.dSkin=s;};
+        list.appendChild(el);
+      });
+      document.getElementById('dskin-confirm').onclick=()=>{
+        const payload=JSON.stringify({frac:st.dFrac,rank:st.dRank,otdel:st.dOtdel,skin:st.dSkin});
+        if(typeof cef!=='undefined')cef.emit('fsbpanel:disguise_skin',payload);
+        showMain();
+      };
+    }catch(e){}
+  });
+}
+
+(function buildCivSkins(){
+  const list=document.getElementById('dciv-list');
+  let selSkin=CIV_SKINS[0];
+  st.civSkin=selSkin;
+  CIV_SKINS.forEach(s=>{
+    const el=document.createElement('div');
+    el.className='dialog-list-item'+(s===selSkin?' selected':'');
+    el.textContent='Скин '+s;
+    el.onclick=()=>{list.querySelectorAll('.dialog-list-item').forEach(x=>x.classList.remove('selected'));el.classList.add('selected');selSkin=s;st.civSkin=s;};
+    list.appendChild(el);
+  });
+  document.getElementById('dciv-confirm').onclick=()=>{
+    if(typeof cef!=='undefined')cef.emit('fsbpanel:disguise_civ',String(st.civSkin));
+    showMain();
+  };
+})();
+
+function removeDisguise(){if(typeof cef!=='undefined')cef.emit('fsbpanel:disguise_remove','1');showMain();}
+
+function submitFire(){
+  const name=document.getElementById('fire-name').value.trim();
+  const reason=document.getElementById('fire-reason').value.trim();
+  if(!name){showErr('fire-err','Введите ник игрока');return;}
+  if(!reason){showErr('fire-err','Введите причину');return;}
+  if(typeof cef!=='undefined')cef.emit('fsbpanel:fire',JSON.stringify({name,reason}));
+}
+if(typeof cef!=='undefined'){
+  cef.on('fsbpanel:fire_result',json=>{
+    try{
+      const d=JSON.parse(json);
+      if(d.error){showErr('fire-err',d.error);return;}
+      document.getElementById('fire-name').value='';
+      document.getElementById('fire-reason').value='';
+      showMain();
+    }catch(e){}
+  });
+}
+
+function submitUnwarn(){
+  const name=document.getElementById('unwarn-name').value.trim();
+  const reason=document.getElementById('unwarn-reason').value.trim();
+  if(!name){showErr('unwarn-err','Введите ник игрока');return;}
+  if(!reason){showErr('unwarn-err','Введите причину');return;}
+  if(typeof cef!=='undefined')cef.emit('fsbpanel:unwarn',JSON.stringify({name,reason}));
+}
+if(typeof cef!=='undefined'){
+  cef.on('fsbpanel:unwarn_result',json=>{
+    try{
+      const d=JSON.parse(json);
+      if(d.error){showErr('unwarn-err',d.error);return;}
+      document.getElementById('unwarn-name').value='';
+      document.getElementById('unwarn-reason').value='';
+      showMain();
+    }catch(e){}
+  });
+}
+
+function submitWb(){
+  const v=document.getElementById('wb-in').value.trim();
+  if(!v){showErr('wb-err','Введите ник игрока');return;}
+  if(typeof cef!=='undefined')cef.emit('fsbpanel:workbook',v);
+}
+if(typeof cef!=='undefined'){
+  cef.on('fsbpanel:wb_result',json=>{
+    try{
+      const d=JSON.parse(json);
+      if(d.error){showErr('wb-err',d.error);return;}
+    }catch(e){}
+  });
+}
+
+function submitWarn(){
+  const name=document.getElementById('warn-name').value.trim();
+  const reason=document.getElementById('warn-reason').value.trim();
+  if(!name){showErr('warn-err','Введите ник игрока');return;}
+  if(!reason){showErr('warn-err','Введите причину');return;}
+  if(typeof cef!=='undefined')cef.emit('fsbpanel:warn',JSON.stringify({name,reason}));
+}
+if(typeof cef!=='undefined'){
+  cef.on('fsbpanel:warn_result',json=>{
+    try{
+      const d=JSON.parse(json);
+      if(d.error){showErr('warn-err',d.error);return;}
+      document.getElementById('warn-name').value='';
+      document.getElementById('warn-reason').value='';
+      showMain();
+    }catch(e){}
+  });
+}
+
+function openOrgStats(){
+  if(typeof cef!=='undefined')cef.emit('fsbpanel:org_stats','1');
+  else renderOrgStats({total:288,fracs:[{id:1,name:'Правительство',count:13},{id:2,name:'ФСБ',count:8},{id:3,name:'ДПС',count:60},{id:4,name:'ППС',count:80},{id:5,name:'ЕСС',count:29},{id:6,name:'ВЧ',count:73},{id:7,name:'Байкеры',count:12},{id:8,name:'Скинхеды',count:5},{id:9,name:'Русская мафия',count:10},{id:10,name:'Кавказская мафия',count:8}]});
+}
+if(typeof cef!=='undefined'){
+  cef.on('fsbpanel:org_stats_result',json=>{
+    try{renderOrgStats(JSON.parse(json));}catch(e){}
+  });
+}
+function renderOrgStats(data){
+  st.orgList=data.fracs;
+  st.orgSel=0;
+  document.getElementById('org-stats-title').textContent='Общее количество: '+data.total+' чел.';
+  const list=document.getElementById('org-stats-list');
+  list.innerHTML='';
+  data.fracs.forEach((f,i)=>{
+    const el=document.createElement('div');
+    el.className='dialog-list-item'+(i===0?' selected':'');
+    el.innerHTML='<span>'+(i+1)+'. '+f.name+'</span><span class="org-count">'+f.count+' чел.</span>';
+    el.style.display='flex';el.style.justifyContent='space-between';
+    el.onclick=()=>{list.querySelectorAll('.dialog-list-item').forEach(x=>x.classList.remove('selected'));el.classList.add('selected');st.orgSel=i;};
+    list.appendChild(el);
+  });
+  document.getElementById('org-stats-view').onclick=()=>{
+    const f=st.orgList[st.orgSel];
+    if(!f)return;
+    if(typeof cef!=='undefined'){
+      cef.emit('fsbpanel:open_find',String(f.id));
+    } else {
+      document.getElementById('org-members-title').textContent='Состав — '+f.name;
+      document.getElementById('org-find-stats').innerHTML='';
+      document.getElementById('org-members-list').innerHTML='<div class="dialog-text">В игре откроется /find панель этой организации.</div>';
+      showDlg('dlg-org-members');
+    }
+  };
+  document.getElementById('org-members-back').onclick=()=>{openOrgStats();};
+  showDlg('dlg-org-stats');
+}
+
+if(typeof cef!=='undefined'){
+  cef.on('fsbpanel:find_stats',json=>{
+    try{
+      const d=JSON.parse(json);
+      const el=document.getElementById('org-find-stats');
+      el.innerHTML='';
+      [{val:d.stats.total,lbl:'Всего'},{val:d.stats.active,lbl:'На работе'},{val:d.stats.vacation,lbl:'Выходной'},{val:d.stats.suspended,lbl:'Отстранены'}].forEach(s=>{
+        const div=document.createElement('div');div.className='find-stat';
+        div.innerHTML='<span class="val">'+s.val+'</span><span class="lbl">'+s.lbl+'</span>';
+        el.appendChild(div);
+      });
+    }catch(e){}
+  });
+  cef.on('fsbpanel:find_member',json=>{
+    try{st.findMembers.push(JSON.parse(json));}catch(e){}
+  });
+  cef.on('fsbpanel:find_done',()=>{
+    const list=document.getElementById('org-members-list');
+    list.innerHTML='';
+    st.findMembers.forEach(m=>{
+      const row=document.createElement('div');row.className='find-member';
+      const sc=m.status==='На работе'?'st-active':m.status==='Отстранен'?'st-sus':'st-off';
+      row.innerHTML='<span class="mid">['+m.id+']</span><span class="mname">'+m.name+(m.afk?' <span style="color:#f80;font-size:10px">[AFK]</span>':'')+'</span><span class="mrank">'+m.rank+'</span><span class="mdept">'+m.dept+'</span><span class="mstatus '+sc+'">'+m.status+'</span>';
+      list.appendChild(row);
+    });
+  });
+}
+
+window.onload=()=>{if(typeof cef!=='undefined')cef.emit('fsbpanel:ready','1');};
+</script>
+</body>
+</html>

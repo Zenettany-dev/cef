@@ -1,0 +1,362 @@
+@charset "UTF-8";
+
+/* ==========================================================================
+   1. ШРИФТЫ
+   ========================================================================== */
+@font-face {
+    font-family: "Proxima Nova Bold";
+    src: url("fonts/ProximaNova-Bold.ttf") format("truetype");
+    font-weight: bold;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: "Gotham-Medium";
+    src: url("fonts/Gotham Pro Medium.ttf");
+}
+
+/* ==========================================================================
+   2. ОСНОВНОЙ КОНТЕЙНЕР ДИАЛОГА
+   ========================================================================== */
+.dialog:focus {
+    outline: none;
+}
+
+.dialog {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    
+    width: clamp(540px, 55vw, 800px);
+    height: auto;
+    max-height: 88vh;
+    
+    background-color: #17161b;
+    background-image: url("../images/bg.png");
+    background-repeat: repeat;
+    background-position: center;
+    border-radius: 16px;
+    box-shadow: 0 30px 70px rgba(0, 0, 0, 0.9), 
+                0 0 0 1px rgba(255, 255, 255, 0.05);
+    color: #ffffff;
+    font-family: "Gotham-Medium", sans-serif;
+    padding: clamp(22px, 2.4vw, 30px);
+    box-sizing: border-box;
+    z-index: 1000;
+    user-select: none;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ==========================================================================
+   3. ХЕДЕР И ЗАГОЛОВОК
+   ========================================================================== */
+.dialog-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    cursor: move;
+}
+
+.dialog-title {
+    font-family: "Gotham-Medium", sans-serif;
+    font-weight: bold;
+    font-size: clamp(17px, 1.3vw, 21px);
+    color: #e87820;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    white-space: nowrap;
+    margin-right: 14px;
+}
+
+.dialog-header::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0) 100%);
+}
+
+/* ==========================================================================
+   4. ОСНОВНОЙ КОНТЕНТ (БЕЗ СКРОЛЛА)
+   ========================================================================== */
+.dialog-content {
+    position: relative;
+    z-index: 2;
+    font-size: clamp(13.5px, 0.95vw, 15px);
+    line-height: 1.55;
+    color: #d1d1d6;
+    margin-bottom: 18px;
+    height: auto;
+    overflow: visible;
+    width: 100%;
+}
+
+.dialog-text {
+    line-height: 1.55;
+    font-family: "Proxima Nova Bold", sans-serif;
+    white-space: pre-wrap;
+    word-break: break-word;
+    tab-size: 25;
+    color: #e1e1e6;
+    width: 100%;
+}
+
+.dialog-list-text {
+    margin-bottom: 10px;
+    line-height: 1.5;
+    font-family: "Proxima Nova Bold", sans-serif;
+    color: #a0a0ab;
+}
+
+/* Кастомный тонкий скроллбар исключительно для длинных LIST/TABLIST */
+.dialog-tablist::-webkit-scrollbar,
+.dialog-list::-webkit-scrollbar {
+    width: 4px;
+}
+
+.dialog-tablist::-webkit-scrollbar-thumb,
+.dialog-list::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.18);
+    border-radius: 4px;
+}
+
+/* ==========================================================================
+   5. СПИСКИ И ТАБЛИЦЫ
+   ========================================================================== */
+.dialog-list, 
+.dialog-tablist {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    max-height: clamp(220px, 42vh, 380px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 4px;
+    margin-bottom: 14px;
+    outline: none;
+    width: 100%;
+}
+
+/* Обычный элемент списка (DIALOG_STYLE_LIST) — прижимаем цветной текст влево */
+.dialog-list-item {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding: clamp(10px, 1.1vh, 12px) 15px;
+    background: rgba(17, 16, 20, 0.85);
+    border-radius: 10px;
+    cursor: pointer;
+    font-family: "Proxima Nova Bold", sans-serif;
+    font-size: clamp(12px, 0.9vw, 14px);
+    color: #ffffff;
+    white-space: nowrap;
+    transition: background 0.15s ease;
+    outline: none;
+}
+
+/* Строки таблиц (TABLIST) */
+.dialog-tablist .row:not(.header) {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: clamp(10px, 1.1vh, 12px) 15px;
+    background: rgba(17, 16, 20, 0.85);
+    border-radius: 10px;
+    cursor: pointer;
+    font-family: "Proxima Nova Bold", sans-serif;
+    font-size: clamp(12px, 0.9vw, 14px);
+    color: #ffffff;
+    white-space: nowrap;
+    transition: background 0.15s ease;
+    outline: none;
+}
+
+.dialog-tablist .row.header {
+    display: flex;
+    padding: 0 14px 4px 14px;
+    font-family: "Proxima Nova Bold", sans-serif;
+    font-size: clamp(11px, 0.85vw, 13px);
+    color: #e87820;
+    background: transparent !important;
+    border-radius: 0 !important;
+    cursor: default;
+}
+
+/* Ячейки таблиц */
+.dialog-tablist .cell {
+    flex: 1;
+    font-family: "Proxima Nova Bold", sans-serif;
+}
+
+/* Ячейки для стиля LIST_TEXT (Стиль 7) */
+.dialog-list-item .cell {
+    flex: 1;
+}
+
+.dialog-list-item .cell:last-child:not(:first-child) {
+    text-align: right;
+}
+
+/* Наведение и выбор */
+.dialog-list-item:hover,
+.dialog-tablist .row:not(.header):hover {
+    background: rgba(28, 27, 33, 0.9);
+}
+
+.dialog-list-item.selected,
+.dialog-list-item.selected *,
+.dialog-tablist .row.selected,
+.dialog-tablist .row.selected *,
+.dialog-tablist tr.selected,
+.dialog-tablist tr.selected * {
+    color: #000000 !important;
+}
+
+.dialog-list-item.selected,
+.dialog-tablist .row.selected,
+.dialog-tablist tr.selected {
+    background: linear-gradient(180deg, #f08c33 0%, #e17b20 100%) !important;
+    box-shadow: 0 4px 12px rgba(240, 140, 51, 0.25);
+}
+
+/* ==========================================================================
+   6. ПОЛЕ ВВОДА (INPUT + БЕЙДЖ)
+   ========================================================================== */
+.dialog-input-wrapper {
+    position: relative;
+    width: 100%;
+    margin-top: 4px;
+    margin-bottom: 18px;
+    z-index: 2;
+}
+
+.dialog-input {
+    width: 100%;
+    height: 46px;
+    background-color: #0d0c10;
+    border: 1px solid #23222a;
+    border-radius: 10px;
+    padding: 0 48px 0 16px;
+    color: #ffffff;
+    font-family: "Gotham-Medium", sans-serif;
+    font-size: 14px;
+    box-sizing: border-box;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.dialog-input::placeholder {
+    color: #52515a;
+}
+
+.dialog-input:focus {
+    border-color: #e87820;
+}
+
+.dialog-password {
+    -webkit-text-security: disc;
+}
+
+.dialog-input-lang {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #212027;
+    color: #8c8b96;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: bold;
+    font-family: "Gotham-Medium", sans-serif;
+    pointer-events: none;
+    user-select: none;
+}
+
+/* ==========================================================================
+   7. КНОПКИ (BUTTONS)
+   ========================================================================== */
+.dialog-buttons {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    gap: 12px;
+    margin-top: auto;
+    width: 100%;
+}
+
+.dialog-button {
+    flex: 1;
+    height: 44px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 13.5px;
+    text-transform: uppercase;
+    font-family: "Proxima Nova Bold", sans-serif;
+    letter-spacing: 0.6px;
+    transition: filter 0.15s ease, transform 0.05s ease;
+    outline: none;
+}
+
+.dialog-button:active {
+    transform: scale(0.98);
+}
+
+.dialog-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: #2a2930 !important;
+    box-shadow: none !important;
+}
+
+.dialog-button-primary {
+    background: #30c759;
+    color: #ffffff;
+    box-shadow: 0 4px 14px rgba(48, 199, 89, 0.25);
+}
+
+.dialog-button-primary:hover:not(:disabled) {
+    filter: brightness(1.08);
+}
+
+.dialog-button-secondary, 
+.dialog-button-middle {
+    background-color: #383740;
+    color: #ffffff;
+}
+
+.dialog-button-secondary:hover, 
+.dialog-button-middle:hover {
+    background-color: #454450;
+}
+
+/* ==========================================================================
+   8. КАРТИНКИ
+   ========================================================================== */
+.dialog-pictures {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 15px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding-top: 15px;
+}
+
+.dialog-pictures img {
+    width: 100px;
+    height: 70px;
+    object-fit: contain;
+    border-radius: 8px;
+    border: 1px solid #33323a;
+    background-color: #111014;
+}

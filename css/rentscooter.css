@@ -1,0 +1,158 @@
+.hint {
+    font-family: 'Roboto', 'Proxima Nova', sans-serif;
+}
+
+.hint .wrapper {
+    position: fixed; /* Используем fixed, чтобы элемент всегда был на экране */
+    top: 0;
+    left: 0;
+    width: 100vw; /* Растягиваем по ширине экрана */
+    height: 100vh; /* Растягиваем по высоте экрана */
+    background: url('../images/process-hint-background.png') no-repeat center/cover;
+    opacity: 0;
+    animation: fadeAnimation 0.15s ease-in forwards;
+}
+
+.hint .blackout-img {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    bottom: 0;
+}
+
+.hint .container {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 1vh;
+    bottom: 1vh;
+    width: 100%;
+}
+
+.hint .container__colored-ellipse {
+    position: absolute;
+    transform: translateY(80%);
+    width: 34vw;
+    height: 20vw;
+    border-radius: 100%;
+    filter: blur(5vw);
+    z-index: 0;
+}
+
+.hint .container__pre-title {
+    font-size: 0.8vw;
+    font-weight: 600;
+    line-height: 18.83px;
+    letter-spacing: 0.43em;
+    text-transform: uppercase;
+    color: #aaa;
+    z-index: 1;
+}
+
+.hint .container__title {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    gap: 1.5vw;
+}
+
+.hint .container__title__line {
+    width: 15%;
+    height: 0.05vw;
+    background: linear-gradient(-90deg, rgba(255,255,255,0.5) 0%, transparent 100%);
+}
+
+.hint .container__title__line.right {
+    background: linear-gradient(90deg, rgba(255,255,255,0.5) 0%, transparent 100%);
+}
+
+.hint .container__title span {
+    font-size: 3vw;
+    font-weight: 700;
+    color: #fff;
+}
+
+.hint .container__post-title {
+    font-size: 1vw;
+    font-weight: 600;
+    line-height: 1.5vw;
+    color: #f1c529;
+    z-index: 1;
+}
+
+.hint .container__description {
+    font-size: 1vw;
+    font-weight: 600;
+    line-height: 1.2vw;
+    text-align: center;
+    color: #fff;
+    z-index: 1;
+}
+
+.hint .container__timer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    width: 15vw;
+    z-index: 1;
+}
+
+.hint .container__timer__title {
+    font-size: 1vw;
+    font-weight: 600;
+    line-height: 1.3vw;
+    color: #aaa;
+}
+
+.hint .container__timer__time {
+    font-size: 2.5vw;
+    font-weight: 700;
+    line-height: 3vw;
+    color: #fff;
+    animation: scaleUpOnChange 0.15s ease-in-out;
+}
+
+.hint .container__timer__progress-bar {
+    height: 0.3vw;
+    border-radius: 0.3vw;
+    background: #ffa722;
+    transition: width 0.1s linear; /* Уменьшено время перехода для плавности */
+}
+
+.hint .container__post-description {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.8vw;
+    z-index: 1;
+}
+
+.hint .container__post-description .material-icons {
+    width: 1.3vw;
+    height: 1.3vw;
+    font-size: 1.3vw;
+    line-height: 1.3vw;
+    color: #fff;
+}
+
+.hint .container__post-description span {
+    font-size: 1vw;
+    font-weight: 600;
+    line-height: 1.3vw;
+    color: #fff;
+}
+
+@keyframes fadeAnimation {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes scaleUpOnChange {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}

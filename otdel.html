@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Панель отдела</title>
+<style>
+@font-face{font-family:'Proxima Nova Bold';src:url('css/fonts/ProximaNova-Bold.ttf') format('truetype');}
+@font-face{font-family:'Gotham-Medium';src:url('css/fonts/Gotham Pro Medium.ttf') format('truetype');}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100vw;height:100vh;background:transparent;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+.dialog{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(1.5);transform-origin:center;background:linear-gradient(to bottom right,#1a1a1c,#201f24);border:1px solid #444;border-radius:5px;box-shadow:0 0 20px rgba(0,0,0,0.5);min-width:450px;max-width:800px;color:#fff;user-select:none;overflow:hidden;display:none;z-index:100;}
+.dialog.active{display:block;}
+.dialog::before{content:"";position:absolute;top:0;left:0;right:0;bottom:0;background:linear-gradient(to bottom,rgba(26,26,28,0.6) 0%,rgba(32,31,36,0.1) 100%),url('images/background.svg');z-index:-1;}
+.dialog-header{padding:10px 20px;cursor:move;display:flex;justify-content:space-between;align-items:center;}
+.dialog-header::after{content:"";flex-grow:1;height:1px;background:linear-gradient(to right,rgba(255,255,255,0.25),rgba(255,255,255,0));align-self:center;margin-top:10px;margin-left:5px;}
+.dialog-title{font-family:'Gotham-Medium',sans-serif;font-size:20px;color:#e69348;text-transform:uppercase;margin-top:10px;letter-spacing:0.155vh;}
+.dialog-content{padding:10px 20px 0;max-height:400px;overflow-y:auto;scrollbar-width:none;}
+.dialog-content::-webkit-scrollbar{width:4px;}
+.dialog-content::-webkit-scrollbar-thumb{background:#e69348;border-radius:2px;}
+.dialog-list{display:flex;flex-direction:column;gap:4px;margin-bottom:10px;}
+.dialog-list-item{padding:10px 12px;cursor:pointer;background:rgba(0,0,0,0.5);border-radius:2px;font-family:'Proxima Nova Bold',sans-serif;font-size:14px;transition:background 0.15s;}
+.dialog-list-item:hover{background:#444;}
+.dialog-list-item.selected{background:#e69348;color:#2e302b;box-shadow:0 0 5px rgba(230,147,72,0.5);}
+.dialog-text{font-family:'Proxima Nova Bold',sans-serif;font-size:13px;line-height:1.6;margin-bottom:10px;color:#ccc;}
+.dialog-input-wrap{position:relative;margin:6px 0 10px;}
+.dialog-input{width:100%;height:40px;padding:0 50px 0 10px;background:#000;border:1px solid #000;color:#aaa;border-radius:1px;font-family:'Gotham-Medium',sans-serif;font-size:13px;line-height:40px;}
+.dialog-input:focus{outline:none;color:#fff;}
+.dialog-input[type=number]::-webkit-outer-spin-button,
+.dialog-input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+.dialog-input[type=number]{-moz-appearance:textfield;}
+.input-lang{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-family:'Proxima Nova Bold',sans-serif;font-size:11px;color:#888;pointer-events:none;}
+.section-label{font-family:'Gotham-Medium',sans-serif;font-size:11px;color:#888;text-transform:uppercase;letter-spacing:0.1em;margin:6px 0 2px;}
+.dialog-buttons{display:flex;justify-content:space-between;padding:10px 20px;gap:6px;}
+.btn{flex:1;padding:12px 15px;border:none;border-radius:1.5px;cursor:pointer;font-size:12px;text-transform:uppercase;font-family:'Proxima Nova Bold',sans-serif;margin-bottom:10px;transition:background 0.2s,box-shadow 0.3s;}
+.btn-primary{background:linear-gradient(to right,#21a24d,#5fda55);color:#fff;box-shadow:0 1.5px 0 #2d682f;}
+.btn-primary:hover{box-shadow:0 1.5px 0 #2d682f,0 3px 2px rgba(70,180,76,0.3);}
+.btn-secondary{background:#3f3f41;opacity:0.7;color:#fff;outline:0.1px solid rgba(255,255,255,0.3);}
+.btn-secondary:hover{opacity:1;}
+.err-msg{font-family:'Proxima Nova Bold',sans-serif;font-size:13px;color:#f44336;background:rgba(244,67,54,0.1);border-radius:2px;padding:6px 10px;margin-bottom:8px;display:none;}
+.err-msg.show{display:block;}
+.member-row{display:flex;align-items:center;background:rgba(0,0,0,0.4);border-radius:2px;padding:6px 10px;margin-bottom:3px;font-family:'Proxima Nova Bold',sans-serif;font-size:12px;gap:8px;}
+.member-name{flex:1;color:#fff;}
+.member-rank{color:#aaa;min-width:120px;}
+.member-online{min-width:60px;text-align:right;font-size:11px;}
+.st-on{color:#4caf50;}
+.st-off{color:#888;}
+.info-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.06);font-family:'Proxima Nova Bold',sans-serif;font-size:13px;}
+.info-row .lbl{color:#888;}
+.info-row .val{color:#e69348;}
+.otdel-select-item{padding:10px 12px;cursor:pointer;background:rgba(0,0,0,0.5);border-radius:2px;font-family:'Proxima Nova Bold',sans-serif;font-size:14px;transition:background 0.15s;margin-bottom:4px;}
+.otdel-select-item:hover{background:#444;}
+.otdel-select-item.selected{background:#e69348;color:#2e302b;}
+</style>
+</head>
+<body>
+
+<!-- ВЫБОР ОТДЕЛА (для лидера/полковника) -->
+<div class="dialog" id="dlg-select">
+  <div class="dialog-header"><div class="dialog-title">Выбор отдела</div></div>
+  <div class="dialog-content">
+    <div class="dialog-list" id="select-list"></div>
+  </div>
+  <div class="dialog-buttons">
+    <button class="btn btn-primary" id="select-btn">Управление</button>
+    <button class="btn btn-secondary" onclick="closePanel()">Закрыть</button>
+  </div>
+</div>
+
+<!-- ГЛАВНОЕ МЕНЮ ОТДЕЛА -->
+<div class="dialog" id="dlg-main">
+  <div class="dialog-header"><div class="dialog-title" id="main-title">Отдел</div></div>
+  <div class="dialog-content">
+    <div class="dialog-list" id="main-list">
+      <div class="dialog-list-item selected" data-idx="0">1. Информация об отделе</div>
+      <div class="dialog-list-item" data-idx="1">2. Просмотр сотрудников</div>
+      <div class="dialog-list-item" data-idx="2">3. Принять сотрудника</div>
+      <div class="dialog-list-item" data-idx="3">4. Исключить сотрудника</div>
+      <div class="dialog-list-item" id="item-chief" data-idx="4">5. Назначить начальника</div>
+      <div class="dialog-list-item" id="item-dep" data-idx="5">6. Назначить заместителя</div>
+      <div class="dialog-list-item" id="item-disband" data-idx="6">7. Расформировать отдел</div>
+    </div>
+  </div>
+  <div class="dialog-buttons">
+    <button class="btn btn-primary" id="main-select">Выбрать</button>
+    <button class="btn btn-secondary" id="main-back">Назад</button>
+  </div>
+</div>
+
+<!-- ИНФОРМАЦИЯ -->
+<div class="dialog" id="dlg-info">
+  <div class="dialog-header"><div class="dialog-title" id="info-title">Информация</div></div>
+  <div class="dialog-content" id="info-content"></div>
+  <div class="dialog-buttons">
+    <button class="btn btn-secondary" onclick="showMain()">Назад</button>
+  </div>
+</div>
+
+<!-- СПИСОК СОТРУДНИКОВ -->
+<div class="dialog" id="dlg-members">
+  <div class="dialog-header"><div class="dialog-title" id="members-title">Сотрудники</div></div>
+  <div class="dialog-content"><div id="members-list"><div class="dialog-text">Загрузка...</div></div></div>
+  <div class="dialog-buttons">
+    <button class="btn btn-secondary" onclick="showMain()">Назад</button>
+  </div>
+</div>
+
+<!-- ПРИНЯТЬ -->
+<div class="dialog" id="dlg-add">
+  <div class="dialog-header"><div class="dialog-title">Принять сотрудника</div></div>
+  <div class="dialog-content">
+    <div class="section-label">ID игрока</div>
+    <div class="dialog-input-wrap"><input class="dialog-input" id="add-id" placeholder="Нажмите для ввода" type="number"><span class="input-lang">123</span></div>
+    <div class="err-msg" id="add-err"></div>
+  </div>
+  <div class="dialog-buttons">
+    <button class="btn btn-primary" onclick="submitAdd()">Принять</button>
+    <button class="btn btn-secondary" onclick="showMain()">Назад</button>
+  </div>
+</div>
+
+<!-- ИСКЛЮЧИТЬ -->
+<div class="dialog" id="dlg-kick">
+  <div class="dialog-header"><div class="dialog-title">Исключить сотрудника</div></div>
+  <div class="dialog-content">
+    <div class="section-label">ID игрока</div>
+    <div class="dialog-input-wrap"><input class="dialog-input" id="kick-id" placeholder="Нажмите для ввода" type="number"><span class="input-lang">123</span></div>
+    <div class="err-msg" id="kick-err"></div>
+  </div>
+  <div class="dialog-buttons">
+    <button class="btn btn-primary" onclick="submitKick()">Исключить</button>
+    <button class="btn btn-secondary" onclick="showMain()">Назад</button>
+  </div>
+</div>
+
+<!-- НАЗНАЧИТЬ НАЧАЛЬНИКА -->
+<div class="dialog" id="dlg-chief">
+  <div class="dialog-header"><div class="dialog-title">Назначить начальника</div></div>
+  <div class="dialog-content">
+    <div class="section-label">Никнейм игрока</div>
+    <div class="dialog-input-wrap"><input class="dialog-input" id="chief-name" placeholder="Нажмите для ввода"><span class="input-lang">RU</span></div>
+    <div class="err-msg" id="chief-err"></div>
+  </div>
+  <div class="dialog-buttons">
+    <button class="btn btn-primary" onclick="submitChief()">Назначить</button>
+    <button class="btn btn-secondary" onclick="showMain()">Назад</button>
+  </div>
+</div>
+
+<!-- НАЗНАЧИТЬ ЗАМА — выбор слота -->
+<div class="dialog" id="dlg-dep-slot">
+  <div class="dialog-header"><div class="dialog-title">Слот заместителя</div></div>
+  <div class="dialog-content">
+    <div class="dialog-list">
+      <div class="dialog-list-item selected" data-slot="0">1. Заместитель 1</div>
+      <div class="dialog-list-item" data-slot="1">2. Заместитель 2</div>
+      <div class="dialog-list-item" data-slot="2">3. Заместитель 3</div>
+    </div>
+  </div>
+  <div class="dialog-buttons">
+    <button class="btn btn-primary" id="dep-slot-next">Далее</button>
+    <button class="btn btn-secondary" onclick="showMain()">Назад</button>
+  </div>
+</div>
+
+<!-- НАЗНАЧИТЬ ЗАМА — ввод ника -->
+<div class="dialog" id="dlg-dep">
+  <div class="dialog-header"><div class="dialog-title" id="dep-title">Заместитель</div></div>
+  <div class="dialog-content">
+    <div class="section-label">Никнейм игрока</div>
+    <div class="dialog-input-wrap"><input class="dialog-input" id="dep-name" placeholder="Нажмите для ввода"><span class="input-lang">RU</span></div>
+    <div class="err-msg" id="dep-err"></div>
+  </div>
+  <div class="dialog-buttons">
+    <button class="btn btn-primary" onclick="submitDep()">Назначить</button>
+    <button class="btn btn-secondary" onclick="showDlg('dlg-dep-slot')">Назад</button>
+  </div>
+</div>
+
+<!-- РАСФОРМИРОВАТЬ -->
+<div class="dialog" id="dlg-disband">
+  <div class="dialog-header"><div class="dialog-title">Расформировать отдел</div></div>
+  <div class="dialog-content">
+    <div class="dialog-text">Вы уверены? Все сотрудники будут исключены из отдела. Действие необратимо.</div>
+    <div class="err-msg" id="disband-err"></div>
+  </div>
+  <div class="dialog-buttons">
+    <button class="btn btn-primary" onclick="submitDisband()">Расформировать</button>
+    <button class="btn btn-secondary" onclick="showMain()">Отмена</button>
+  </div>
+</div>
+
+<script>
+const st={
+  otdels:[], selOtdel:0,
+  mainSel:0, depSlot:0,
+  isLeader:false
+};
+
+function showDlg(id){
+  document.querySelectorAll('.dialog').forEach(d=>d.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  const inp=document.querySelector('#'+id+' .dialog-input');
+  if(inp) setTimeout(()=>inp.focus(),50);
+}
+function showMain(){showDlg('dlg-main');}
+function closePanel(){if(typeof cef!=='undefined')cef.emit('otdel:close','1');}
+function showErr(id,msg){const el=document.getElementById(id);el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),3000);}
+
+function makeDraggable(id){
+  const d=document.getElementById(id);
+  if(!d) return;
+  const h=d.querySelector('.dialog-header');
+  if(!h) return;
+  let drag=false,ox=0,oy=0;
+  h.onmousedown=e=>{drag=true;const r=d.getBoundingClientRect();ox=e.clientX-r.left;oy=e.clientY-r.top;};
+  document.addEventListener('mousemove',e=>{if(!drag)return;d.style.left=(e.clientX-ox)+'px';d.style.top=(e.clientY-oy)+'px';d.style.transform='scale(1.5)';d.style.transformOrigin='top left';});
+  document.addEventListener('mouseup',()=>{drag=false;});
+}
+['dlg-select','dlg-main','dlg-info','dlg-members','dlg-add','dlg-kick','dlg-chief','dlg-dep-slot','dlg-dep','dlg-disband'].forEach(makeDraggable);
+
+// ВЫБОР ОТДЕЛА
+function buildSelectList(){
+  const list=document.getElementById('select-list');
+  list.innerHTML='';
+  st.otdels.forEach((o,i)=>{
+    const el=document.createElement('div');
+    el.className='dialog-list-item'+(i===st.selOtdel?' selected':'');
+    el.textContent=(i+1)+'. '+o.name;
+    el.onclick=()=>{list.querySelectorAll('.dialog-list-item').forEach(x=>x.classList.remove('selected'));el.classList.add('selected');st.selOtdel=i;};
+    list.appendChild(el);
+  });
+}
+document.getElementById('select-btn').onclick=()=>{
+  const o=st.otdels[st.selOtdel];
+  if(!o) return;
+  document.getElementById('main-title').textContent='ОТДЕЛ: '+o.name;
+  if(typeof cef!=='undefined') cef.emit('otdel:select', String(st.selOtdel));
+  showMain();
+};
+
+// ГЛАВНОЕ МЕНЮ
+const mainItems=document.querySelectorAll('#main-list .dialog-list-item');
+mainItems.forEach(item=>{
+  item.onclick=()=>{mainItems.forEach(i=>i.classList.remove('selected'));item.classList.add('selected');st.mainSel=parseInt(item.dataset.idx);};
+});
+document.getElementById('main-select').onclick=()=>{
+  switch(st.mainSel){
+    case 0: if(typeof cef!=='undefined') cef.emit('otdel:info','1'); break;
+    case 1: loadMembers(); break;
+    case 2: showDlg('dlg-add'); break;
+    case 3: showDlg('dlg-kick'); break;
+    case 4: showDlg('dlg-chief'); break;
+    case 5: buildDepSlot(); showDlg('dlg-dep-slot'); break;
+    case 6: showDlg('dlg-disband'); break;
+  }
+};
+document.getElementById('main-back').onclick=()=>{
+  if(st.isLeader) showDlg('dlg-select');
+  else closePanel();
+};
+
+// ИНФОРМАЦИЯ
+if(typeof cef!=='undefined'){
+  cef.on('otdel:info_result',json=>{
+    try{
+      const d=JSON.parse(json);
+      document.getElementById('info-title').textContent='ОТДЕЛ: '+d.name;
+      const c=document.getElementById('info-content');
+      c.innerHTML='';
+      [['Название',d.name],['Сотрудников',d.members+' / '+d.maxMembers],['Начальник',d.chief||'Нет'],['Зам 1',d.dep1||'Нет'],['Зам 2',d.dep2||'Нет'],['Зам 3',d.dep3||'Нет']].forEach(([l,v])=>{
+        const row=document.createElement('div');row.className='info-row';
+        row.innerHTML='<span class="lbl">'+l+'</span><span class="val">'+v+'</span>';
+        c.appendChild(row);
+      });
+      showDlg('dlg-info');
+    }catch(e){}
+  });
+}
+
+// СПИСОК СОТРУДНИКОВ
+function loadMembers(){
+  document.getElementById('members-list').innerHTML='<div class="dialog-text">Загрузка...</div>';
+  showDlg('dlg-members');
+  if(typeof cef!=='undefined') cef.emit('otdel:members','1');
+}
+if(typeof cef!=='undefined'){
+  cef.on('otdel:members_result',json=>{
+    try{
+      const members=JSON.parse(json);
+      const list=document.getElementById('members-list');
+      if(!members.length){list.innerHTML='<div class="dialog-text">Отдел пуст.</div>';return;}
+      list.innerHTML='';
+      members.forEach(m=>{
+        const row=document.createElement('div');row.className='member-row';
+        const sc=m.online?'st-on':'st-off';
+        row.innerHTML='<span class="member-name">'+m.name+'</span><span class="member-rank">'+m.rank+'</span><span class="member-online '+sc+'">'+(m.online?'Онлайн':'Оффлайн')+'</span>';
+        list.appendChild(row);
+      });
+    }catch(e){}
+  });
+}
+
+// ПРИНЯТЬ
+function submitAdd(){
+  const id=document.getElementById('add-id').value.trim();
+  if(!id){showErr('add-err','Введите ID игрока');return;}
+  if(typeof cef!=='undefined') cef.emit('otdel:add', id);
+}
+if(typeof cef!=='undefined'){
+  cef.on('otdel:add_result',json=>{
+    try{
+      const d=JSON.parse(json);
+      if(d.error){showErr('add-err',d.error);return;}
+      document.getElementById('add-id').value='';
+      showMain();
+    }catch(e){}
+  });
+}
+
+// ИСКЛЮЧИТЬ
+function submitKick(){
+  const id=document.getElementById('kick-id').value.trim();
+  if(!id){showErr('kick-err','Введите ID игрока');return;}
+  if(typeof cef!=='undefined') cef.emit('otdel:kick', id);
+}
+if(typeof cef!=='undefined'){
+  cef.on('otdel:kick_result',json=>{
+    try{
+      const d=JSON.parse(json);
+      if(d.error){showErr('kick-err',d.error);return;}
+      document.getElementById('kick-id').value='';
+      showMain();
+    }catch(e){}
+  });
+}
+
+// НАЧАЛЬНИК
+function submitChief(){
+  const name=document.getElementById('chief-name').value.trim();
+  if(!name){showErr('chief-err','Введите никнейм');return;}
+  if(typeof cef!=='undefined') cef.emit('otdel:chief', name);
+}
+if(typeof cef!=='undefined'){
+  cef.on('otdel:chief_result',json=>{
+    try{
+      const d=JSON.parse(json);
+      if(d.error){showErr('chief-err',d.error);return;}
+      document.getElementById('chief-name').value='';
+      showMain();
+    }catch(e){}
+  });
+}
+
+// ЗАМ
+function buildDepSlot(){
+  const items=document.querySelectorAll('#dlg-dep-slot .dialog-list-item');
+  items.forEach(item=>{
+    item.onclick=()=>{items.forEach(i=>i.classList.remove('selected'));item.classList.add('selected');st.depSlot=parseInt(item.dataset.slot);};
+  });
+  st.depSlot=0;
+  items[0].classList.add('selected');
+}
+document.getElementById('dep-slot-next').onclick=()=>{
+  document.getElementById('dep-title').textContent='ЗАМЕСТИТЕЛЬ '+(st.depSlot+1);
+  showDlg('dlg-dep');
+};
+function submitDep(){
+  const name=document.getElementById('dep-name').value.trim();
+  if(!name){showErr('dep-err','Введите никнейм');return;}
+  if(typeof cef!=='undefined') cef.emit('otdel:dep', JSON.stringify({slot:st.depSlot,name}));
+}
+if(typeof cef!=='undefined'){
+  cef.on('otdel:dep_result',json=>{
+    try{
+      const d=JSON.parse(json);
+      if(d.error){showErr('dep-err',d.error);return;}
+      document.getElementById('dep-name').value='';
+      showMain();
+    }catch(e){}
+  });
+}
+
+// РАСФОРМИРОВАТЬ
+function submitDisband(){
+  if(typeof cef!=='undefined') cef.emit('otdel:disband','1');
+}
+if(typeof cef!=='undefined'){
+  cef.on('otdel:disband_result',json=>{
+    try{
+      const d=JSON.parse(json);
+      if(d.error){showErr('disband-err',d.error);return;}
+      closePanel();
+    }catch(e){}
+  });
+}
+
+// ОТКРЫТИЕ
+if(typeof cef!=='undefined'){
+  // открыть как лидер — отделы по одному
+  cef.on('otdel:count',str=>{
+    st.otdels=[];
+  });
+	cef.on('otdel:add_otdel',json=>{
+		try{
+			const d=JSON.parse(json);
+			st.otdels.push({name:d.n});
+		}catch(e){}
+	});
+  cef.on('otdel:open_select',()=>{
+    st.isLeader=true;
+    st.selOtdel=0;
+    buildSelectList();
+    showDlg('dlg-select');
+  });
+  // открыть как начальник/зам — сразу в меню
+  cef.on('otdel:open_main',json=>{
+    try{
+      const d=JSON.parse(json);
+      st.isLeader=false;
+      document.getElementById('main-title').textContent='ОТДЕЛ: '+d.name;
+      // скрыть недоступные пункты
+      if(!d.canChief) document.getElementById('item-chief').style.display='none';
+      if(!d.canDep)   document.getElementById('item-dep').style.display='none';
+      if(!d.canDisband) document.getElementById('item-disband').style.display='none';
+      showMain();
+    }catch(e){}
+  });
+  // открыть как рядовой — только просмотр
+  cef.on('otdel:open_view',json=>{
+    try{
+      const d=JSON.parse(json);
+      st.isLeader=false;
+      document.getElementById('info-title').textContent='ОТДЕЛ: '+d.name;
+      const c=document.getElementById('info-content');
+      c.innerHTML='';
+      [['Название',d.name],['Сотрудников',d.members+' / '+d.maxMembers],['Начальник',d.chief||'Нет']].forEach(([l,v])=>{
+        const row=document.createElement('div');row.className='info-row';
+        row.innerHTML='<span class="lbl">'+l+'</span><span class="val">'+v+'</span>';
+        c.appendChild(row);
+      });
+      showDlg('dlg-info');
+    }catch(e){}
+  });
+}
+
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closePanel();});
+window.onload=()=>{if(typeof cef!=='undefined')cef.emit('otdel:ready','1');};
+</script>
+</body>
+</html>

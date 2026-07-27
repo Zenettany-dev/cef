@@ -1,1 +1,360 @@
-sdada
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <title>AMAZING</title>
+    <link rel="stylesheet" type="text/css" href="css/selector.css">
+    <link rel="stylesheet" type="text/css" href="css/fonts/stylesheet.css">
+    <link rel="stylesheet" type="text/css" href="css/rentscooter.css">
+    <link rel="stylesheet" type="text/css" href="css/interface.hud.css">
+    <link rel="stylesheet" type="text/css" href="css/dialogs_new.css">
+    <link rel="stylesheet" type="text/css" href="css/hint.css">
+    <link rel="stylesheet" type="text/css" href="Hud/assets/css/speedometer.css">
+    <link rel="stylesheet" type="text/css" href="css/bizstats.css">
+    <link rel="stylesheet" type="text/css" href="css/notification.css">
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:100,200,300,400,500,600,700" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #101417;
+        }
+        #new-hud-frame {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            border: none;
+            z-index: 0;
+            pointer-events: none;
+        }
+        /* Окна выбора скина, диалоги и заправки выводим поверх нового худа */
+        .skin-selector, .biz-info-container, .myNotifyWrapper, .hint, #dialog-container, #message, .rentscooter-container {
+            z-index: 10;
+            position: relative;
+        }
+        /* Полностью скрываем старый визуал, чтобы не двоился с новым */
+        .old-hud-hidden-wrapper {
+            display: none !important;
+        }
+
+        /* --- СТИЛИ ДЛЯ БАНКОМАТА (AMAZING DARK-GLASS STYLE) --- */
+        .atm-wrapper {
+            display: none; /* Изначально скрыт */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(5, 10, 20, 0.6);
+            backdrop-filter: blur(8px);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Montserrat', 'Inter', sans-serif;
+            color: #ffffff;
+        }
+        .atm-card {
+            background: linear-gradient(135deg, rgba(20, 27, 43, 0.9) 0%, rgba(10, 14, 23, 0.95) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            width: 420px;
+            padding: 30px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            box-sizing: border-box;
+            position: relative;
+        }
+        .atm-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+        .atm-title {
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: #C2A03D;
+        }
+        .atm-close {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 20px;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .atm-close:hover {
+            color: #ff4d4d;
+        }
+        .atm-balance-block {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            margin-bottom: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+        }
+        .atm-balance-label {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.5);
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+        .atm-balance-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #53c457;
+        }
+        .atm-input-group {
+            margin-bottom: 20px;
+        }
+        .atm-input {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 12px;
+            color: #fff;
+            font-size: 16px;
+            text-align: center;
+            box-sizing: border-box;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .atm-input:focus {
+            border-color: #C2A03D;
+        }
+        .atm-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .atm-btn {
+            width: 100%;
+            padding: 14px;
+            border-radius: 8px;
+            border: none;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: background 0.2s, transform 0.1s;
+        }
+        .atm-btn-primary {
+            background: #C2A03D;
+            color: #101417;
+        }
+        .atm-btn-primary:hover {
+            background: #d4b24b;
+        }
+        .atm-btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .atm-btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .atm-btn:active {
+            transform: scale(0.98);
+        }
+    </style>
+</head>
+<body style="user-select: none;">
+
+    <iframe id="new-hud-frame" name="new-hud-frame" src="hud/index.html" allowtransparency="true"></iframe>
+
+    <div class="atm-wrapper" id="atmBlock">
+        <div class="atm-card">
+            <div class="atm-header">
+                <div class="atm-title">Нижегородский Банк</div>
+                <button class="atm-close" onclick="closeATM()">✕</button>
+            </div>
+            <div class="atm-balance-block">
+                <div class="atm-balance-label">Баланс вашего счета</div>
+                <div class="atm-balance-value" id="atmBalance">0 ₽</div>
+            </div>
+            <div class="atm-input-group">
+                <input type="number" class="atm-input" id="atmAmount" placeholder="Введите сумму" min="1">
+            </div>
+            <div class="atm-buttons">
+                <button class="atm-btn atm-btn-primary" onclick="atmAction(1)">Снять наличные</button>
+                <button class="atm-btn atm-btn-secondary" onclick="atmAction(2)">Пополнить счет</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="skin-selector" id="skinSelector" name="skinSelector">
+        <div class="game-interface" id="gameInterface" name="gameInterface">
+            <div class="background"></div>
+            <div class="content">
+                <div class="category-selector">
+                    <button class="nav-arrow" id="categoryPrev" name="categoryPrev">
+                        <img src="images/choose/arrow-left-rounded.svg" alt="←" />
+                    </button>
+                    <div class="category-info">
+                        <h2 class="category-title" id="categoryTitle" name="categoryTitle">Одежда</h2>
+                        <p class="category-price" id="categoryPrice" name="categoryPrice">28 000 ₽</p>
+                    </div>
+                    <button class="nav-arrow" id="categoryNext" name="categoryNext">
+                        <img src="images/choose/arrow-right-rounded.svg" alt="→" />
+                    </button>
+                </div>
+                <div class="bottom-controls">
+                    <div class="left-section">
+                        <div class="instructions-section">
+                            <button class="close-button" id="closeButton" name="closeButton">✕</button>
+                            <div class="instructions">
+                                <p>Нажмите для выхода или</p>
+                                <p>используйте ESC</p>
+                            </div>
+                        </div>
+                        <div class="navigation-controls">
+                            <button class="nav-button" id="skinPrev" name="skinPrev">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                                    <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                </svg>
+                            </button>
+                            <button class="nav-button" id="skinNext" name="skinNext">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                                    <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                </svg>
+                            </button>
+                            <div class="nav-hint">
+                                <p>Для переключения, используйте</p>
+                                <p>стрелочки на клавиатуре</p>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="buy-button" id="buyButton" name="buyButton">Купить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="biz-info-container" id="bizInfoContainer" name="bizInfoContainer" style="display: none;">
+        <div class="biz-header">
+            <h2 id="station-type" name="station-type">АВТОМОБИЛЬНАЯ ЗАПРАВОЧНАЯ СТАНЦИЯ</h2>
+            <h1 id="station-name" name="station-name">Малая Эдовка</h1>
+        </div>
+        <div class="biz-status">
+            <span id="status-text" name="status-text" class="biz-status-text green">ОТКРЫТО</span>
+        </div>
+        <div class="biz-stats">
+            <div class="biz-stat">
+                <span id="station-number" name="station-number" class="biz-stat-value">51</span>
+                <span class="biz-stat-label">Номер</span>
+            </div>
+            <div class="biz-stat">
+                <span id="station-owner" name="station-owner" class="biz-stat-value"><strong>Государство</strong></span>
+                <span class="biz-stat-label">Владелец</span>
+            </div>
+            <div class="biz-stat">
+                <span id="station-price" name="station-price" class="biz-stat-value">9 000 000 <span class="green">₽</span></span>
+                <span class="biz-stat-label">Цена</span>
+            </div>
+            <div class="biz-stat">
+                <span id="station-roof" name="station-roof" class="biz-stat-value"><strong>Отсутствует</strong></span>
+                <span class="biz-stat-label">Крыша</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="myNotifyWrapper" id="myNotifyContainer" name="myNotifyContainer"></div>
+
+    <div id="blackout" name="blackout"></div>
+
+    <div id="process-hint" class="hint" name="processHint" style="display: none;">
+        <div class="wrapper">
+            <div class="blackout-img"></div>
+            <div class="container">
+                <div class="container__colored-ellipse"></div>
+                <div id="pre-title" name="pre-title" class="container__pre-title" style="display: none;"></div>
+                <div id="title" name="title" class="container__title" style="display: none;">
+                    <div class="container__title__line"></div>
+                    <span></span>
+                    <div class="container__title__line right"></div>
+                </div>
+                <div id="post-title" name="post-title" class="container__post-title" style="display: none;"></div>
+                <div id="description" name="description" class="container__description" style="display: none;"></div>
+                <div class="container__timer">
+                    <div id="timer-title" name="timer-title" class="container__timer__title"></div>
+                    <div id="timer-time" name="timer-time" class="container__timer__time"></div>
+                    <div id="timer-progress" name="timer-progress" class="container__timer__progress-bar"></div>
+                </div>
+                <div id="post-description" name="post-description" class="container__post-description" style="display: none;">
+                    <i class="material-icons">info</i>
+                    <span></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="message" name="message">Используйте клавишу <div id="key" name="key"></div></div>
+    <div id="dialog-container" name="dialog-container"></div>
+
+    <div class="old-hud-hidden-wrapper">
+        <div class="speedometer" id="speedometer" name="speedometer">
+            </div>
+    </div>
+
+    <script>
+
+        // --- ЛОГИКА ДЛЯ СЕРВЕРНОГО СВЯЗУЮЩЕГО CEF ---
+        
+		cef.on("atm:show", function(balance) {
+			console.log("DEBUG: Получил событие atm:show, баланс: " + balance);
+			
+			var atm = document.getElementById("atmBlock");
+			if (atm) {
+				atm.style.display = "flex";
+				document.getElementById("atmBalance").innerText = balance.toLocaleString() + " ₽";
+			} else {
+				console.log("DEBUG: ОШИБКА, элемент atmBlock не найден!");
+			}
+		});
+
+        // Функция отправки действий на сервер (1 - Снять, 2 - Положить)
+        function atmAction(type) {
+            let amount = parseInt(document.getElementById("atmAmount").value);
+            if(isNaN(amount) || amount <= 0) amount = 0;
+            
+            // Триггерим каллбэк в мод OnATMActionSubmit(playerid, arguments[])
+            cef.emit("OnATMActionSubmit", type, amount);
+        }
+
+        // Закрытие банкомата (Крестик или ESC)
+        function closeATM() {
+            document.getElementById("atmBlock").style.display = "none";
+            cef.emit("OnATMActionSubmit", 100, 0); // Шлем case 100 на сервер для разморозки
+        }
+
+        // Отслеживаем нажатие ESC на клавиатуре для закрытия
+        document.addEventListener("keydown", function(e) {
+            if(e.keyCode === 27) { // ESC
+                if(document.getElementById("atmBlock").style.display === "flex") {
+                    closeATM();
+                }
+            }
+        });
+    </script>
+    <script src="script/vue.js"></script>
+    <script src="script/interface-hud.js"></script>
+    <script src="script/selector.js"></script>
+    <script src="script/dialogs_new.js"></script>
+    <script src="Hud/assets/js/speedometer.css"></script>
+    <script src="script/property-info.js"></script>
+    <script src="script/hints.js"></script>
+    <script src="script/sound.js"></script>
+    <script src="script/notifications.js"></script>
+    <script src="script/main.js"></script>
+</body>
+</html>

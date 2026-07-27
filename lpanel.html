@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Панель лидера</title>
+<style>
+@font-face { font-family:'Proxima Nova Bold'; src:url('css/fonts/ProximaNova-Bold.ttf') format('truetype'); }
+@font-face { font-family:'Gotham-Medium'; src:url('css/fonts/Gotham Pro Medium.ttf') format('truetype'); }
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100vw;height:100vh;background:transparent;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+.dialog{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(1.5);transform-origin:center;background:linear-gradient(to bottom right,#1a1a1c,#201f24);border:1px solid #444;border-radius:5px;box-shadow:0 0 20px rgba(0,0,0,0.5);min-width:450px;max-width:800px;color:#fff;user-select:none;overflow:hidden;display:none;z-index:100;}
+.dialog.active{display:block;}
+.dialog::before{content:"";position:absolute;top:0;left:0;right:0;bottom:0;background:linear-gradient(to bottom,rgba(26,26,28,0.6) 0%,rgba(32,31,36,0.1) 100%),url('images/background.svg');z-index:-1;}
+.dialog-header{padding:10px 20px;cursor:move;display:flex;justify-content:space-between;align-items:center;}
+.dialog-header::after{content:"";flex-grow:1;height:1px;background:linear-gradient(to right,rgba(255,255,255,0.25),rgba(255,255,255,0));align-self:center;margin-top:10px;margin-left:5px;}
+.dialog-title{font-family:'Gotham-Medium',sans-serif;font-size:20px;color:#e69348;text-transform:uppercase;margin-top:10px;letter-spacing:0.155vh;}
+.dialog-content{padding:10px 20px 0;max-height:400px;overflow-y:auto;scrollbar-width:none;}
+.dialog-content::-webkit-scrollbar{width:4px;}
+.dialog-content::-webkit-scrollbar-thumb{background:#e69348;border-radius:2px;}
+.dialog-list{display:flex;flex-direction:column;gap:4px;margin-bottom:10px;}
+.dialog-list-item{padding:10px 12px;cursor:pointer;background:rgba(0,0,0,0.5);border-radius:2px;font-family:'Proxima Nova Bold',sans-serif;font-size:14px;transition:background 0.15s;}
+.dialog-list-item:hover{background:#444;}
+.dialog-list-item.selected{background:#e69348;color:#2e302b;box-shadow:0 0 5px rgba(230,147,72,0.5);}
+.dialog-text{font-family:'Proxima Nova Bold',sans-serif;font-size:13px;line-height:1.6;margin-bottom:10px;color:#ccc;}
+.dialog-input-wrap{position:relative;margin:6px 0 10px;}
+.dialog-input{width:100%;height:40px;padding:0 50px 0 10px;background:#000;border:1px solid #000;color:#aaa;border-radius:1px;font-family:'Gotham-Medium',sans-serif;font-size:13px;line-height:40px;}
+.dialog-input:focus{outline:none;color:#fff;}
+.input-lang{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-family:'Proxima Nova Bold',sans-serif;font-size:11px;color:#888;pointer-events:none;}
+.section-label{font-family:'Gotham-Medium',sans-serif;font-size:11px;color:#888;text-transform:uppercase;letter-spacing:0.1em;margin:6px 0 2px;}
+.dialog-buttons{display:flex;justify-content:space-between;padding:10px 20px;gap:6px;}
+.btn{flex:1;padding:12px 15px;border:none;border-radius:1.5px;cursor:pointer;font-size:12px;text-transform:uppercase;font-family:'Proxima Nova Bold',sans-serif;margin-bottom:10px;transition:background 0.2s,box-shadow 0.3s;}
+.btn-primary{background:linear-gradient(to right,#21a24d,#5fda55);color:#fff;box-shadow:0 1.5px 0 #2d682f;}
+.btn-primary:hover{box-shadow:0 1.5px 0 #2d682f,0 3px 2px rgba(70,180,76,0.3);}
+.btn-secondary{background:#3f3f41;opacity:0.7;color:#fff;outline:0.1px solid rgba(255,255,255,0.3);}
+.btn-secondary:hover{opacity:1;}
+.err-msg{font-family:'Proxima Nova Bold',sans-serif;font-size:13px;color:#f44336;background:rgba(244,67,54,0.1);border-radius:2px;padding:6px 10px;margin-bottom:8px;display:none;}
+.err-msg.show{display:block;}
+.member-row{display:flex;align-items:center;background:rgba(0,0,0,0.4);border-radius:2px;padding:6px 10px;margin-bottom:3px;font-family:'Proxima Nova Bold',sans-serif;font-size:12px;gap:8px;cursor:pointer;transition:background 0.15s;}
+.member-row:hover{background:#333;}
+.member-name{flex:1;font-family:'Proxima Nova Bold',sans-serif;color:#fff;}
+.member-rank{color:#aaa;min-width:120px;font-family:'Proxima Nova Bold',sans-serif;}
+.member-status{min-width:60px;text-align:right;font-size:11px;font-family:'Proxima Nova Bold',sans-serif;}
+.st-on{color:#4caf50;}
+.st-off{color:#888;}
+.info-table{width:100%;border-collapse:collapse;margin-bottom:10px;font-family:'Proxima Nova Bold',sans-serif;font-size:13px;}
+.info-table tr{border-bottom:1px solid rgba(255,255,255,0.06);}
+.info-table tr:first-child{background:#e69348;color:#2e302b;}
+.info-table td{padding:8px 12px;}
+.info-table td:last-child{color:#e69348;}
+.info-table tr:first-child td{color:#2e302b !important;font-size:14px;}
+</style>
+</head>
+<body>
+
+<div class="dialog active" id="dlg-main">
+  <div class="dialog-header"><div class="dialog-title">Панель лидера</div></div>
+  <div class="dialog-content">
+    <div class="dialog-list" id="main-list">
+      <div class="dialog-list-item selected" data-idx="0">1. Уволить сотрудника</div>
+      <div class="dialog-list-item" data-idx="1">2. Выдать выговор</div>
+      <div class="dialog-list-item" data-idx="2">3. Снять выговор</div>
+      <div class="dialog-list-item" data-idx="3">4. Список сотрудников</div>
+      <div class="dialog-list-item" data-idx="4">5. Респавн транспорта</div>
+    </div>
+  </div>
+  <div class="dialog-buttons">
+    <button class="btn btn-primary" id="main-select">Выбрать</button>
+    <button class="btn btn-secondary" onclick="closePanel()">Закрыть</button>
+  </div>
+</div>
+
+<div class="dialog" id="dlg-fire">
+  <div class="dialog-header"><div class="dialog-title">Уволить сотрудника</div></div>
+  <div class="dialog-content">
+    <div class="section-label">Ник игрока</div>
+    <div class="dialog-input-wrap"><input class="dialog-input" id="fire-name" placeholder="Нажмите для ввода"><span class="input-lang">RU</span></div>
+    <div class="section-label">Причина увольнения</div>
+    <div class="dialog-input-wrap"><input class="dialog-input" id="fire-reason" placeholder="Нажмите для ввода"><span class="input-lang">RU</span></div>
+    <div class="err-msg" id="fire-err"></div>
+  </div>
+  <div class="dialog-buttons">
+    <button class="btn btn-primary" onclick="submitFire()">Уволить</button>
+    <button class="btn btn-secondary" onclick="showMain()">Назад</button>
+  </div>
+</div>
+
+<div class="dialog" id="dlg-warn">
+  <div class="dialog-header"><div class="dialog-title">Выдать выговор</div></div>
+  <div class="dialog-content">
+    <div class="section-label">Ник игрока</div>
+    <div class="dialog-input-wrap"><input class="dialog-input" id="warn-name" placeholder="Нажмите для ввода"><span class="input-lang">RU</span></div>
+    <div class="section-label">Причина</div>
+    <div class="dialog-input-wrap"><input class="dialog-input" id="warn-reason" placeholder="Нажмите для ввода"><span class="input-lang">RU</span></div>
+    <div class="err-msg" id="warn-err"></div>
+  </div>
+  <div class="dialog-buttons">
+    <button class="btn btn-primary" onclick="submitWarn()">Выдать</button>
+    <button class="btn btn-secondary" onclick="showMain()">Назад</button>
+  </div>
+</div>
+
+<div class="dialog" id="dlg-unwarn">
+  <div class="dialog-header"><div class="dialog-title">Снять выговор</div></div>
+  <div class="dialog-content">
+    <div class="section-label">Ник игрока</div>
+    <div class="dialog-input-wrap"><input class="dialog-input" id="unwarn-name" placeholder="Нажмите для ввода"><span class="input-lang">RU</span></div>
+    <div class="section-label">Причина снятия</div>
+    <div class="dialog-input-wrap"><input class="dialog-input" id="unwarn-reason" placeholder="Нажмите для ввода"><span class="input-lang">RU</span></div>
+    <div class="err-msg" id="unwarn-err"></div>
+  </div>
+  <div class="dialog-buttons">
+    <button class="btn btn-primary" onclick="submitUnwarn()">Снять</button>
+    <button class="btn btn-secondary" onclick="showMain()">Назад</button>
+  </div>
+</div>
+
+<div class="dialog" id="dlg-list">
+  <div class="dialog-header"><div class="dialog-title" id="list-title">Сотрудники</div></div>
+  <div class="dialog-content"><div id="members-list"><div class="dialog-text">Загрузка...</div></div></div>
+  <div class="dialog-buttons"><button class="btn btn-secondary" onclick="showMain()">Назад</button></div>
+</div>
+
+<div class="dialog" id="dlg-info">
+  <div class="dialog-header"><div class="dialog-title" id="info-title">Сотрудник</div></div>
+  <div class="dialog-content"><table class="info-table" id="info-table"></table></div>
+  <div class="dialog-buttons">
+    <button class="btn btn-secondary" onclick="showDlg('dlg-list')">Назад</button>
+    <button class="btn btn-secondary" onclick="closePanel()">Закрыть</button>
+  </div>
+</div>
+
+<script>
+let mainSel=0;
+const mainItems=document.querySelectorAll('#main-list .dialog-list-item');
+mainItems.forEach(item=>{
+  item.onclick=()=>{mainItems.forEach(i=>i.classList.remove('selected'));item.classList.add('selected');mainSel=parseInt(item.dataset.idx);};
+});
+document.getElementById('main-select').onclick=()=>{
+  switch(mainSel){
+    case 0:showDlg('dlg-fire');break;
+    case 1:showDlg('dlg-warn');break;
+    case 2:showDlg('dlg-unwarn');break;
+    case 3:loadList();break;
+    case 4:closePanel();break;
+  }
+};
+
+function showDlg(id){
+  document.querySelectorAll('.dialog').forEach(d=>d.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  const inp=document.querySelector('#'+id+' .dialog-input');
+  if(inp)inp.focus();
+}
+function showMain(){showDlg('dlg-main');}
+function closePanel(){if(typeof cef!=='undefined')cef.emit('lpanel:close','1');}
+function showErr(id,msg){const el=document.getElementById(id);el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),3000);}
+
+function makeDraggable(id){
+  const d=document.getElementById(id);
+  const h=d.querySelector('.dialog-header');
+  let drag=false,ox=0,oy=0;
+  h.onmousedown=e=>{drag=true;const r=d.getBoundingClientRect();ox=e.clientX-r.left;oy=e.clientY-r.top;};
+  document.addEventListener('mousemove',e=>{if(!drag)return;d.style.left=(e.clientX-ox)+'px';d.style.top=(e.clientY-oy)+'px';d.style.transform='scale(1.5)';d.style.transformOrigin='top left';});
+  document.addEventListener('mouseup',()=>{drag=false;});
+}
+['dlg-main','dlg-fire','dlg-warn','dlg-unwarn','dlg-list','dlg-info'].forEach(makeDraggable);
+
+function submitFire(){
+  const name=document.getElementById('fire-name').value.trim();
+  const reason=document.getElementById('fire-reason').value.trim();
+  if(!name){showErr('fire-err','Введите ник игрока');return;}
+  if(!reason){showErr('fire-err','Введите причину');return;}
+  if(typeof cef!=='undefined')cef.emit('lpanel:fire',JSON.stringify({name,reason}));
+}
+function submitWarn(){
+  const name=document.getElementById('warn-name').value.trim();
+  const reason=document.getElementById('warn-reason').value.trim();
+  if(!name){showErr('warn-err','Введите ник игрока');return;}
+  if(!reason){showErr('warn-err','Введите причину');return;}
+  if(typeof cef!=='undefined')cef.emit('lpanel:warn',JSON.stringify({name,reason}));
+}
+function submitUnwarn(){
+  const name=document.getElementById('unwarn-name').value.trim();
+  const reason=document.getElementById('unwarn-reason').value.trim();
+  if(!name){showErr('unwarn-err','Введите ник игрока');return;}
+  if(!reason){showErr('unwarn-err','Введите причину');return;}
+  if(typeof cef!=='undefined')cef.emit('lpanel:unwarn',JSON.stringify({name,reason}));
+}
+
+function loadList(){
+  document.getElementById('members-list').innerHTML='<div class="dialog-text">Загрузка...</div>';
+  showDlg('dlg-list');
+  if(typeof cef!=='undefined')cef.emit('lpanel:list','1');
+}
+
+if(typeof cef!=='undefined'){
+  cef.on('lpanel:open',()=>showMain());
+
+  cef.on('lpanel:result',json=>{
+    try{
+      const d=JSON.parse(json);
+      if(d.error){
+        const active=document.querySelector('.dialog.active');
+        const err=active?active.querySelector('.err-msg'):null;
+        if(err){err.textContent=d.error;err.classList.add('show');setTimeout(()=>err.classList.remove('show'),3000);}
+        return;
+      }
+      showMain();
+    }catch(e){}
+  });
+
+  cef.on('lpanel:fire_result',json=>{
+    try{
+      const d=JSON.parse(json);
+      if(d.error){showErr('fire-err',d.error);return;}
+      document.getElementById('fire-name').value='';
+      document.getElementById('fire-reason').value='';
+      showMain();
+    }catch(e){}
+  });
+
+  cef.on('lpanel:warn_result',json=>{
+    try{
+      const d=JSON.parse(json);
+      if(d.error){showErr('warn-err',d.error);return;}
+      document.getElementById('warn-name').value='';
+      document.getElementById('warn-reason').value='';
+      showMain();
+    }catch(e){}
+  });
+
+  cef.on('lpanel:unwarn_result',json=>{
+    try{
+      const d=JSON.parse(json);
+      if(d.error){showErr('unwarn-err',d.error);return;}
+      document.getElementById('unwarn-name').value='';
+      document.getElementById('unwarn-reason').value='';
+      showMain();
+    }catch(e){}
+  });
+
+  cef.on('lpanel:list_result',json=>{
+    try{
+      const members=JSON.parse(json);
+      const list=document.getElementById('members-list');
+      if(!members.length){list.innerHTML='<div class="dialog-text">Список пуст.</div>';return;}
+      list.innerHTML='';
+      members.forEach(m=>{
+        const row=document.createElement('div');
+        row.className='member-row';
+        const sc=m.online?'st-on':'st-off';
+        row.innerHTML='<span class="member-name">'+m.name+'</span><span class="member-rank">'+m.rank+'</span><span class="member-status '+sc+'">'+(m.online?'Онлайн':'Оффлайн')+'</span>';
+        row.onclick=()=>showMemberInfo(m);
+        list.appendChild(row);
+      });
+    }catch(e){}
+  });
+}
+
+function showMemberInfo(m){
+  document.getElementById('info-title').textContent='Сотрудник '+m.name.toUpperCase();
+  const tbl=document.getElementById('info-table');
+  tbl.innerHTML='';
+  const rows=[['Ник',m.name],['Уровень',m.level],['Ранг',m.rank+' ('+m.rankNum+')'],['Статус',m.online?'Онлайн':'Оффлайн'],['Выговоры',m.warns],['Последний вход',m.lastlogin||'—']];
+  rows.forEach(([k,v],i)=>{
+    const tr=document.createElement('tr');
+    if(i===0){const td=document.createElement('td');td.colSpan=2;td.textContent=k+': '+v;tr.appendChild(td);}
+    else{const t1=document.createElement('td');t1.textContent=k;const t2=document.createElement('td');t2.textContent=v;tr.appendChild(t1);tr.appendChild(t2);}
+    tbl.appendChild(tr);
+  });
+  showDlg('dlg-info');
+}
+
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closePanel();});
+window.onload=()=>{if(typeof cef!=='undefined')cef.emit('lpanel:ready','1');};
+</script>
+</body>
+</html>

@@ -1,0 +1,215 @@
+#dialog_container {
+	font-family: 'Proxima Nova Rg';
+	letter-spacing: -0.2px;
+	font-size: 0.82vw;
+	position: absolute;
+	text-align: center;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	padding: 1vw 1.5vw;
+	min-width: 40vh;
+	max-width: 120vh;
+	width: auto;
+	border-radius: 0.2vw;
+	background:
+		linear-gradient(45deg, #1a1a1c, #1d1c21),
+		url(../images/bg.png);
+	background-size: cover, 500px auto;
+	background-position: center center, center center;
+	background-repeat: no-repeat, no-repeat;
+
+	opacity: 0;
+	animation: dia 0.10s forwards;
+	z-index: 1000;
+}
+
+
+.dialogHeader {
+	font-size: 1.4vw;
+	color: #fb9c44;
+	font-family: 'Locomotype GigaSansBold';
+	text-align: left;
+	letter-spacing: -0.5px;
+	text-transform: uppercase;
+	position: relative;
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.dialogHeader::after {
+	content: "";
+	flex-grow: 1;
+	height: 1px;
+	background: linear-gradient(to right, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0));
+	align-self: center;
+	display: block;
+	margin-bottom: 7px;
+}
+
+.buttons {
+	margin-top: 15px;
+	display: flex;
+	justify-content: center;
+	user-select: none;
+}
+
+.clickBtn1, .clickBtn2 {
+	flex: 1;
+	padding: 15px 0;
+	border-radius: 3px;
+	font-family: 'Proxima Nova Bold';
+	font-size: 0.95vw;
+	text-align: center;
+	text-transform: uppercase;
+	transition: all 0.3s ease-out;
+}
+
+.clickBtn1 {
+	color: white;
+	background: linear-gradient(250deg, #50b846, #25913c);
+	margin-right: 5px; /* добавляем отступ справа */
+}
+
+.clickBtn2 {
+	background: #5a5a5e;
+	color: #c0bfc4;
+	margin-left: 5px; /* отступ слева */
+}
+
+
+.dialog_input {
+	width: 97%;
+	background-color: black;
+	outline: 0;
+	border: 1px solid rgba(58, 58, 58, 0.2);
+	font-family: 'Proxima Nova Sm';
+	padding: 10px 10px;
+	margin-top: 10px;
+	border-radius: 3px;
+	letter-spacing: -0.5px;
+	font-size: 0.85vw;
+	color: #252525;
+}
+
+.dialogItem {
+	background-color: #151517;
+	border: 1px solid rgba(30, 30, 30, 0.164);
+	border-bottom: 0;
+	padding: 11px 15px;
+	text-align: center;
+	min-width: 320px;
+	color: #fff;
+	border-radius: 3.5px;
+	font-family: 'Proxima Nova Bold';
+	letter-spacing: -0.5px;
+	font-size: 15px;
+	opacity: 0.9;
+	margin-bottom: 2.5px;
+	transition: 0.3s;
+}
+
+.dialogItem:last-child {
+	border-bottom: 1px solid rgba(30, 30, 30, 0.164);
+}
+
+.dialogItem:hover {
+	background-color: rgba(43, 43, 43, 1);
+}
+.tablist_headers {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	align-items: center;
+	text-align: center;
+	align-self: end;
+}
+
+.dialogItemHeader {
+	margin-left: 10px;
+	min-width: 200px;
+	margin-right: 10px;
+}
+
+.styleDialogTablist {
+	padding-left: 10px;
+	padding-right: 15px;
+	font-size: 0.85vw;
+	color: #fff;
+	letter-spacing: -0.5px;
+	opacity: 0.6;
+	text-transform: uppercase;
+	border-radius: 9px;
+
+	transition: 0.5s;
+	margin-bottom: 10px;
+}
+
+.dialogText {
+	max-height: 500px;
+	width: 100%;
+	margin-top: 10px;
+	color: #f8f8f8;
+	font-family: 'Proxima Nova Bold';
+	font-size: 1.5vh;
+	overflow-y: auto;
+	text-align: left;
+}
+
+/* Цветовые span-ы внутри текста */
+span {
+	color: var(--i);
+	transition: 0.4s;
+}
+
+.dialogItem:hover .dialogItemContent span {
+	color: var(--g);
+}
+
+::-webkit-scrollbar {
+	width: 3px;
+}
+
+::-webkit-scrollbar-track {
+	background: rgba(35, 36, 40, 0.15);
+}
+
+::-webkit-scrollbar-thumb {
+	background-color: rgba(255, 255, 255, 0.5);
+}
+
+.dialog-white_back {
+	background-color: #fb9c44;
+	color: #000;
+	border: 1px solid #fb9c44;
+}
+
+.dialog-active_text {
+	color: #fff;
+	font-weight: bold;
+}
+
+.dialog-white_back:hover {
+	background-color: #fb9c44;
+}
+
+.dialog-white_back:hover span {
+	color: #fff;
+}
+
+.dialog-noback {
+	background: none;
+	border: 0;
+}
+
+@keyframes dia {
+	0% {
+		opacity: 0;
+		transform: translate(-50%, -50%) scale(0.8);
+	}
+	100% {
+		opacity: 1;
+		transform: translate(-50%, -50%) scale(1);
+	}
+}

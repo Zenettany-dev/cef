@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Квадратная шкала</title>
+<style>
+  body {
+    margin: 0;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #222;
+    font-family: Arial, sans-serif;
+  }
+
+  .overlay {
+    background: rgba(0,0,0,0.7);
+    padding: 30px;
+    border-radius: 12px;
+    text-align: center;
+    color: #fff;
+    width: 300px;
+    position: relative;
+  }
+
+  .key-label {
+    position: relative;
+    display: inline-block;
+    margin-bottom: 10px;
+    font-size: 20px;
+  }
+
+  .key-pointer {
+    width: 0; 
+    height: 0; 
+    border-left: 12px solid transparent;
+    border-right: 12px solid transparent;
+    border-top: 15px solid orange;
+    margin: 0 auto 8px auto;
+  }
+
+  .progress-container {
+    width: 200px;
+    height: 200px;
+    background: #444;
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+    margin: 0 auto;
+  }
+
+  .progress-bar {
+    height: 100%;
+    width: 0;
+    background: orange;
+    position: absolute;
+    top: 0;
+    left: 0;
+    transition: width 0.05s linear;
+  }
+
+  .progress-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #000;
+    font-weight: bold;
+    font-size: 48px;
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+
+<div class="overlay">
+  <div class="key-label">
+    <div class="key-pointer"></div>
+    Удерживайте клавишу:
+  </div>
+
+  <div class="progress-container">
+    <div class="progress-bar" id="progressBar"></div>
+    <div class="progress-text" id="progressText">A</div>
+  </div>
+</div>
+
+<script>
+const progressBar = document.getElementById('progressBar');
+const progressText = document.getElementById('progressText');
+
+const keys = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+let fillKey = 'A';         
+let speed = 300;           
+let progress = 0;
+let filling = false;
+let lastTime;
+let filled = false;       
+const delayBeforeReset = 0.2; 
+let delayTimer = 0;
+
+progressText.textContent = fillKey;
+
+let activeKeyPressed = false;
+
+window.addEventListener('keydown', (e) => {
+  if (e.code === codeFromKey(fillKey)) {
+    filling = true;
+    activeKeyPressed = true;
+  }
+});
+
+window.addEventListener('keyup', (e) => {
+  if (e.code === codeFromKey(fillKey)) {
+    filling = false;
+    activeKeyPressed = false;
+  }
+});
+
+function getRandomKey() {
+  return keys.charAt(Math.floor(Math.random() * keys.length));
+}
+
+function codeFromKey(key) {
+  return 'Key' + key.toUpperCase();
+}
+
+function updateProgress(timestamp) {
+  if (!lastTime) lastTime = timestamp;
+  const delta = (timestamp - lastTime) / 1000;
+  lastTime = timestamp;
+
+  const maxWidth = progressBar.parentElement.offsetWidth;
+
+  // Заполнение шкалы
+  if (filling && !filled) {
+    progress += speed * delta;
+    if (progress >= maxWidth) {
+      progress = maxWidth;
+      filled = true;
+      delayTimer = 0; // запускаем таймер сброса
+    }
+  } else if (!filling && !filled) {
+    progress -= speed * delta * 0.5;
+    if (progress < 0) progress = 0;
+  }
+
+  // Плавный сброс после заполнения, независимо от удержания клавиши
+  if (filled) {
+    delayTimer += delta;
+    if (delayTimer >= delayBeforeReset) {
+      progress -= speed * delta * 2;
+      if (progress <= 0) {
+        progress = 0;
+        filled = false;
+        fillKey = getRandomKey();
+        progressText.textContent = fillKey;
+      }
+    }
+  }
+
+  progressBar.style.width = progress + 'px';
+  requestAnimationFrame(updateProgress);
+}
+
+requestAnimationFrame(updateProgress);
+</script>
+
+</body>
+</html>
