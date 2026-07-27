@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <title>Amazing online - HUD & Radar</title>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="assets/css/hud.css">
+    <link rel="stylesheet" type="text/css" href="assets/css/dialogs_new.css">
+    <link rel="stylesheet" type="text/css" href="assets/css/stylesheet.css">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/5.0.0-alpha1/css/bootstrap.min.css">
+    
+    <script src="assets/js/cef-mock.js"></script>
+</head>
+<body>
+    <div id="app">
+        <div class="amazing-main-hud-block" v-if="active">
+            <img class="background" src="assets/images/HUD/hud_back.png" />
+            
+            <div class="information-block">
+                <div class="time">
+                    <p>{{ currentTime }}</p>
+                </div>
+                <div class="data">
+                    <p>{{ currentDate }}</p>
+                </div>
+                <div class="name">
+                    <p>{{ formattedName }}</p>
+                </div>
+                
+                <div class="id-svg-wrapper" :class="idClass">
+                    <svg viewBox="0 0 54 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M0 0H53.7312V19.8392H9.99649L0 0Z" />
+                    </svg>
+                    <p>{{ id }}</p>
+                </div>
+            </div>
+
+            <img class="logotype" src="assets/images/HUD/logo.png" />
+
+            <div class="weapon-block">
+                <img :src="`assets/images/weapons/${weapon}.png`" />
+                <p v-if="isWeaponFire">{{ ammo }}</p>
+            </div>
+
+            <div class="armour-block" v-if="armour > 0">
+                <p class="armour-text">{{ armour }}</p>
+                <img class="armour-logo" src="assets/images/HUD/armour.png" />
+            </div>
+
+            <div class="progress-health-block">
+                <p class="text">{{ health }}</p>
+                <div class="hp-circle-container">
+                    <svg viewBox="0 0 400 400">
+                        <circle 
+                            class="progress-circle-indicator" 
+                            cx="200" 
+                            cy="200" 
+                            r="180" 
+                            fill="none" 
+                            stroke="#f22546" 
+                            stroke-width="34" 
+                            :stroke-dasharray="healthCircleLength" 
+                            :stroke-dashoffset="healthStrokeDashoffset" 
+                            transform="rotate(-90 200 200)" 
+                        />
+                    </svg>
+                    <img class="hp-icon" src="assets/images/HUD/health.png" />
+                </div>
+            </div>
+
+            <div class="wanted-block" v-if="wanted > 0">
+                <p class="wanted-text">{{ wanted }}</p>
+                <img class="wanted-logo" src="assets/images/HUD/wanted.png" />
+            </div>
+
+            <div class="money-block">
+                <img src="assets/images/HUD/money.png" />
+                <p>{{ formatNumber(money) }}</p>
+            </div>
+        </div>
+        <div class="radar-block" v-if="radar.active">
+            <div class="radar-container">
+                <img class="radar-frame" src="assets/images/HUD/Frame2.png" />
+            </div>
+
+            <div class="location-info" v-if="radar.location || radar.street">
+                <img class="location-icon" src="assets/images/HUD/location.svg" />
+                <div class="location-text">
+                    <p class="zone">{{ radar.location }}</p>
+                    <p class="street">{{ radar.street }}</p>
+                </div>
+            </div>
+
+            <div class="hints-block" v-if="hints.length > 0">
+                <div class="hint-item" v-for="(hint, index) in hints" :key="index">
+                    <div class="key-box">{{ hint.key }}</div>
+                    <span class="hint-text">{{ hint.text }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script src="assets/js/vue.js"></script>
+    <script src="assets/js/hud.js"></script>
+</body>
+</html>
